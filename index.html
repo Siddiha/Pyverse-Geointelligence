@@ -1,0 +1,988 @@
+<html>
+  <head>
+    <title>ThreeGeoJSON Demo</title>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+          "jsm/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+        }
+      }
+    </script>
+  </head>
+    <body>
+      <style>
+        html, body {
+          padding: 0;
+          margin: 0;
+        }
+      </style>
+		<script type="module" src="./index.js"></script>
+	</body>
+</html>
+<!-- 
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geopolitical Intelligence Agent</title>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+            "jsm/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+        }
+    }
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .globe-container {
+            flex: 1;
+            position: relative;
+            background: radial-gradient(circle at center, rgba(255,255,255,0.05) 0%, transparent 70%);
+        }
+
+        .chat-panel {
+            width: 420px;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .chat-header {
+            padding: 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+        }
+
+        .chat-header h1 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .chat-header p {
+            margin: 8px 0 0 0;
+            font-size: 14px;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            margin-top: 12px;
+            font-size: 12px;
+            color: #4ade80;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #4ade80;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+        }
+
+        .messages::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .messages::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            padding: 16px;
+            border-radius: 12px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+            margin-left: 20px;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.agent {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-right: 20px;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-content {
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
+        .message-time {
+            font-size: 11px;
+            opacity: 0.6;
+            margin-top: 8px;
+        }
+
+        .input-container {
+            padding: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            gap: 12px;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            color: white;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .message-input:focus {
+            outline: none;
+            border-color: #4a90e2;
+            box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+        }
+
+        .message-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .voice-btn, .send-btn {
+            width: 48px;
+            height: 48px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            font-size: 18px;
+        }
+
+        .voice-btn {
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .voice-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .voice-btn.recording {
+            background: #ef4444;
+            border-color: #ef4444;
+            animation: pulse 1s infinite;
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+            color: white;
+        }
+
+        .send-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .loading-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+        }
+
+        .loading-dots {
+            display: flex;
+            gap: 4px;
+        }
+
+        .loading-dots span {
+            width: 4px;
+            height: 4px;
+            background: #4a90e2;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+
+        .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% {
+                transform: scale(0);
+            } 40% {
+                transform: scale(1);
+            }
+        }
+
+        .info-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 300px;
+            display: none;
+        }
+
+        .info-panel.visible {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .info-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #4a90e2;
+        }
+
+        .info-content {
+            font-size: 14px;
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            font-size: 18px;
+            padding: 4px;
+        }
+
+        .globe-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            gap: 12px;
+        }
+
+        .control-btn {
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .control-btn.active {
+            background: #4a90e2;
+            border-color: #4a90e2;
+        }
+
+        .news-ticker {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 420px;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 12px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 12px;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .ticker-content {
+            animation: scroll-left 30s linear infinite;
+        }
+
+        @keyframes scroll-left {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        @media (max-width: 768px) {
+            .chat-panel {
+                width: 100%;
+                position: absolute;
+                top: 0;
+                right: -100%;
+                transition: right 0.3s ease;
+                z-index: 1000;
+            }
+
+            .chat-panel.open {
+                right: 0;
+            }
+
+            .news-ticker {
+                right: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="globe-container" id="globe-container">
+            <div class="info-panel" id="info-panel">
+                <button class="close-btn" onclick="closeInfoPanel()">×</button>
+                <div class="info-title" id="info-title"></div>
+                <div class="info-content" id="info-content"></div>
+            </div>
+            
+            <div class="globe-controls">
+                <button class="control-btn active" onclick="setVisualizationMode('conflicts')">Conflicts</button>
+                <button class="control-btn" onclick="setVisualizationMode('economy')">Economy</button>
+                <button class="control-btn" onclick="setVisualizationMode('climate')">Climate</button>
+                <button class="control-btn" onclick="setVisualizationMode('politics')">Politics</button>
+            </div>
+            
+            <div class="news-ticker">
+                <div class="ticker-content" id="news-ticker">
+                    Loading latest global news...
+                </div>
+            </div>
+        </div>
+
+        <div class="chat-panel" id="chat-panel">
+            <div class="chat-header">
+                <h1>🌍 GeoIntel Agent</h1>
+                <p>Your AI-powered geopolitical intelligence assistant</p>
+                <div class="status-indicator">
+                    <div class="status-dot"></div>
+                    <span>Online & Ready</span>
+                </div>
+            </div>
+
+            <div class="messages" id="messages">
+                <div class="message agent">
+                    <div class="message-content">
+                        Hello! I'm your Geopolitical Intelligence Agent. I can help you understand global events, conflicts, and political developments by visualizing them on the 3D globe. 
+                        <br><br>
+                        Try asking me about:
+                        <br>• "Show me current conflicts in the Middle East"
+                        <br>• "What's happening in Ukraine?"
+                        <br>• "Highlight countries with economic instability"
+                        <br>• Click on any country for instant information!
+                    </div>
+                    <div class="message-time">Just now</div>
+                </div>
+            </div>
+
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <button class="voice-btn" id="voice-btn" onclick="toggleVoiceRecording()">🎤</button>
+                    <input 
+                        type="text" 
+                        class="message-input" 
+                        id="message-input" 
+                        placeholder="Ask about global events or click on the globe..."
+                        onkeypress="handleInputKeyPress(event)"
+                    >
+                    <button class="send-btn" id="send-btn" onclick="sendMessage()">➤</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from "three";
+        import { OrbitControls } from 'jsm/controls/OrbitControls.js';
+
+        // Global variables
+        let scene, camera, renderer, controls, planet, raycaster, mouse;
+        let countryMeshes = new Map();
+        let isRecording = false;
+        let recognition = null;
+        let currentMode = 'conflicts';
+
+        // Country coordinates and data
+        const countryData = {
+            "Ukraine": { coords: [31.1656, 48.3794], color: 0xff4444, intensity: 0.9 },
+            "Russia": { coords: [105.3188, 61.5240], color: 0xff6666, intensity: 0.8 },
+            "Israel": { coords: [34.8516, 31.0461], color: 0xff8800, intensity: 0.7 },
+            "Gaza": { coords: [34.4669, 31.3547], color: 0xff4444, intensity: 0.9 },
+            "Syria": { coords: [38.9968, 34.8021], color: 0xff6666, intensity: 0.6 },
+            "Yemen": { coords: [48.5164, 15.5527], color: 0xff5555, intensity: 0.5 },
+            "China": { coords: [104.1954, 35.8617], color: 0xffaa00, intensity: 0.4 },
+            "Taiwan": { coords: [120.9605, 23.6978], color: 0xff7700, intensity: 0.6 },
+            "Iran": { coords: [53.6880, 32.4279], color: 0xff8800, intensity: 0.5 }
+        };
+
+        // Sample news data
+        const newsData = [
+            "🔴 BREAKING: Diplomatic tensions rise in Eastern Europe",
+            "📊 Global markets react to trade policy changes",
+            "🌍 Climate summit discussions continue in major capitals",
+            "⚡ Energy crisis affects multiple European nations",
+            "🏛️ Election results shift political landscape in South America"
+        ];
+
+        // Initialize everything
+        window.addEventListener('DOMContentLoaded', () => {
+            initThreeJS();
+            initSpeechRecognition();
+            startNewsTicker();
+            loadGeoJSONData();
+            addWelcomeMessage();
+        });
+
+        function initThreeJS() {
+            const container = document.getElementById('globe-container');
+            const w = container.clientWidth;
+            const h = container.clientHeight;
+
+            // Scene setup
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x000000);
+
+            // Camera setup
+            camera = new THREE.PerspectiveCamera(75, w / h, 0.1, 1000);
+            camera.position.z = 25;
+
+            // Renderer setup
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(w, h);
+            renderer.setPixelRatio(window.devicePixelRatio);
+            container.appendChild(renderer.domElement);
+
+            // Controls
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.enableZoom = true;
+            controls.enablePan = false;
+
+            // Raycaster for mouse interactions
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+
+            // Planet container
+            planet = new THREE.Object3D();
+            scene.add(planet);
+
+            // Create wireframe sphere
+            const geometry = new THREE.SphereGeometry(10, 64, 32);
+            const material = new THREE.MeshBasicMaterial({
+                color: 0x333333,
+                wireframe: true,
+                transparent: true,
+                opacity: 0.3
+            });
+            const sphere = new THREE.Mesh(geometry, material);
+            planet.add(sphere);
+
+            // Add ambient lighting
+            const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+            scene.add(ambientLight);
+
+            // Add point light
+            const pointLight = new THREE.PointLight(0xffffff, 1, 100);
+            pointLight.position.set(10, 10, 10);
+            scene.add(pointLight);
+
+            // Mouse event listeners
+            renderer.domElement.addEventListener('click', onMouseClick);
+            renderer.domElement.addEventListener('mousemove', onMouseMove);
+
+            // Start render loop
+            animate();
+        }
+
+        function loadGeoJSONData() {
+            // Simulate loading countries data
+            setTimeout(() => {
+                createCountryHighlights();
+                addMessage('agent', 'Globe loaded! Countries are now clickable. Current mode: Conflicts & Tensions');
+            }, 1000);
+        }
+
+        function createCountryHighlights() {
+            Object.entries(countryData).forEach(([country, data]) => {
+                const { coords, color, intensity } = data;
+                const [lon, lat] = coords;
+                
+                // Convert to spherical coordinates
+                const phi = (90 - lat) * (Math.PI / 180);
+                const theta = (lon + 180) * (Math.PI / 180);
+                
+                const x = -(10.2 * Math.sin(phi) * Math.cos(theta));
+                const z = (10.2 * Math.sin(phi) * Math.sin(theta));
+                const y = (10.2 * Math.cos(phi));
+
+                // Create pulsing highlight
+                const geometry = new THREE.SphereGeometry(0.3 + intensity * 0.3, 16, 16);
+                const material = new THREE.MeshBasicMaterial({
+                    color: color,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                
+                const highlight = new THREE.Mesh(geometry, material);
+                highlight.position.set(x, y, z);
+                highlight.userData = { country, data };
+                
+                countryMeshes.set(country, highlight);
+                planet.add(highlight);
+
+                // Add pulsing animation
+                animateHighlight(highlight, intensity);
+            });
+        }
+
+        function animateHighlight(mesh, intensity) {
+            const originalScale = 1;
+            let time = Math.random() * Math.PI * 2;
+            
+            function pulse() {
+                time += 0.05;
+                const scale = originalScale + Math.sin(time) * 0.3 * intensity;
+                mesh.scale.setScalar(scale);
+                
+                const opacity = 0.6 + Math.sin(time * 2) * 0.3 * intensity;
+                mesh.material.opacity = opacity;
+                
+                requestAnimationFrame(pulse);
+            }
+            pulse();
+        }
+
+        function onMouseClick(event) {
+            mouse.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
+            mouse.y = -(event.clientY / renderer.domElement.clientHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(Array.from(countryMeshes.values()));
+
+            if (intersects.length > 0) {
+                const clickedObject = intersects[0].object;
+                const { country, data } = clickedObject.userData;
+                showCountryInfo(country, data);
+            }
+        }
+
+        function onMouseMove(event) {
+            mouse.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
+            mouse.y = -(event.clientY / renderer.domElement.clientHeight) * 2 + 1;
+
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(Array.from(countryMeshes.values()));
+
+            // Change cursor
+            renderer.domElement.style.cursor = intersects.length > 0 ? 'pointer' : 'default';
+        }
+
+        function showCountryInfo(country, data) {
+            const infoPanel = document.getElementById('info-panel');
+            const infoTitle = document.getElementById('info-title');
+            const infoContent = document.getElementById('info-content');
+
+            infoTitle.textContent = country;
+            
+            let content = '';
+            switch(currentMode) {
+                case 'conflicts':
+                    content = getConflictInfo(country);
+                    break;
+                case 'economy':
+                    content = getEconomyInfo(country);
+                    break;
+                case 'climate':
+                    content = getClimateInfo(country);
+                    break;
+                case 'politics':
+                    content = getPoliticsInfo(country);
+                    break;
+            }
+            
+            infoContent.innerHTML = content;
+            infoPanel.classList.add('visible');
+
+            // Also add message to chat
+            addMessage('agent', `📍 ${country}: ${content.replace(/<[^>]*>/g, '')}`);
+        }
+
+        function getConflictInfo(country) {
+            const conflictInfo = {
+                "Ukraine": "🔴 <strong>Active Conflict Zone</strong><br>Ongoing conflict since 2022. International support continues. High civilian impact.",
+                "Russia": "⚠️ <strong>Sanctions & Isolation</strong><br>Multiple international sanctions. Economic pressure increasing. Diplomatic tensions.",
+                "Israel": "🔴 <strong>Regional Tensions</strong><br>Ongoing security concerns. Regional stability affected. International mediation efforts.",
+                "Gaza": "🔴 <strong>Humanitarian Crisis</strong><br>Severe humanitarian situation. International aid efforts. Civilian impact high.",
+                "Syria": "⚠️ <strong>Ongoing Instability</strong><br>Long-term conflict effects. Reconstruction challenges. Refugee crisis continues.",
+                "China": "📊 <strong>Regional Tensions</strong><br>Trade disputes. Territorial claims in South China Sea. Tech competition.",
+                "Taiwan": "⚠️ <strong>Strategic Flashpoint</strong><br>Geopolitical tensions. International support. Defense concerns."
+            };
+            return conflictInfo[country] || "ℹ️ Monitoring for developments...";
+        }
+
+        function getEconomyInfo(country) {
+            return `📊 <strong>Economic Overview</strong><br>GDP impact: Moderate<br>Trade relations: Under pressure<br>Market volatility: Elevated`;
+        }
+
+        function getClimateInfo(country) {
+            return `🌍 <strong>Climate Impact</strong><br>Environmental stress: High<br>Climate policies: Developing<br>Sustainability index: Variable`;
+        }
+
+        function getPoliticsInfo(country) {
+            return `🏛️ <strong>Political Status</strong><br>Stability index: Variable<br>International relations: Complex<br>Policy changes: Ongoing`;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            
+            // Rotate planet slowly
+            planet.rotation.y += 0.002;
+            
+            renderer.render(scene, camera);
+        }
+
+        function setVisualizationMode(mode) {
+            currentMode = mode;
+            
+            // Update button states
+            document.querySelectorAll('.control-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Update visualization colors based on mode
+            updateVisualizationColors(mode);
+            
+            addMessage('agent', `🔄 Switched to ${mode.charAt(0).toUpperCase() + mode.slice(1)} mode. Click on highlighted countries for specific information.`);
+        }
+
+        function updateVisualizationColors(mode) {
+            const colorSchemes = {
+                conflicts: { base: 0xff4444, alt: 0xff8800 },
+                economy: { base: 0x44ff44, alt: 0xffaa00 },
+                climate: { base: 0x4444ff, alt: 0x44ffff },
+                politics: { base: 0xff44ff, alt: 0x8844ff }
+            };
+
+            const scheme = colorSchemes[mode];
+            countryMeshes.forEach((mesh, country) => {
+                const intensity = countryData[country].intensity;
+                mesh.material.color.setHex(intensity > 0.6 ? scheme.base : scheme.alt);
+            });
+        }
+
+        function closeInfoPanel() {
+            document.getElementById('info-panel').classList.remove('visible');
+        }
+
+        function initSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'en-US';
+
+                recognition.onstart = () => {
+                    isRecording = true;
+                    document.getElementById('voice-btn').classList.add('recording');
+                };
+
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    document.getElementById('message-input').value = transcript;
+                    sendMessage();
+                };
+
+                recognition.onend = () => {
+                    isRecording = false;
+                    document.getElementById('voice-btn').classList.remove('recording');
+                };
+
+                recognition.onerror = (event) => {
+                    console.error('Speech recognition error:', event.error);
+                    isRecording = false;
+                    document.getElementById('voice-btn').classList.remove('recording');
+                };
+            }
+        }
+
+        function toggleVoiceRecording() {
+            if (!recognition) {
+                addMessage('agent', '🎤 Speech recognition is not supported in your browser. Please type your message instead.');
+                return;
+            }
+
+            if (isRecording) {
+                recognition.stop();
+            } else {
+                recognition.start();
+                addMessage('agent', '🎤 Listening... Speak your question about global events.');
+            }
+        }
+
+        function handleInputKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (!message) return;
+
+            // Add user message
+            addMessage('user', message);
+            input.value = '';
+
+            // Show loading
+            showLoading();
+
+            // Process with AI (simulated)
+            setTimeout(() => {
+                hideLoading();
+                processUserQuery(message);
+            }, 1500);
+        }
+
+        function processUserQuery(query) {
+            const lowerQuery = query.toLowerCase();
+            let response = '';
+
+            if (lowerQuery.includes('ukraine') || lowerQuery.includes('russia')) {
+                response = '🔴 The Russia-Ukraine conflict remains a major geopolitical crisis. Ukraine continues to receive international support while Russia faces extensive sanctions. The situation affects global energy markets and food security.';
+                highlightCountries(['Ukraine', 'Russia']);
+            } 
+            else if (lowerQuery.includes('middle east') || lowerQuery.includes('israel') || lowerQuery.includes('gaza')) {
+                response = '🔴 Middle East tensions remain high with ongoing conflicts affecting regional stability. International mediation efforts continue amid humanitarian concerns.';
+                highlightCountries(['Israel', 'Gaza', 'Syria']);
+            }
+            else if (lowerQuery.includes('china') || lowerQuery.includes('taiwan')) {
+                response = '📊 China-Taiwan relations remain a critical geopolitical flashpoint with implications for regional security and global trade. International diplomatic efforts ongoing.';
+                highlightCountries(['China', 'Taiwan']);
+            }
+            else if (lowerQuery.includes('economic') || lowerQuery.includes('trade')) {
+                response = '📊 Global economic tensions affect multiple regions. Trade relationships, sanctions, and supply chain disruptions continue to impact international markets.';
+                setVisualizationMode('economy');
+            }
+            else if (lowerQuery.includes('climate') || lowerQuery.includes('environment')) {
+                response = '🌍 Climate change impacts vary globally. Many nations are implementing new environmental policies while dealing with extreme weather events and sustainability challenges.';
+                setVisualizationMode('climate');
+            }
+            else if (lowerQuery.includes('conflict') || lowerQuery.includes('war')) {
+                response = '🔴 Current global conflicts include the Russia-Ukraine war, Middle East tensions, and various regional disputes. These conflicts affect millions and have global implications.';
+                setVisualizationMode('conflicts');
+            }
+            else if (lowerQuery.includes('politics') || lowerQuery.includes('election')) {
+                response = '🏛️ Political landscapes are shifting globally with elections, policy changes, and diplomatic relations evolving rapidly across multiple continents.';
+                setVisualizationMode('politics');
+            }
+            else {
+                response = `🤔 I understand you're asking about "${query}". Let me analyze global events related to this topic. You can also click on any highlighted country on the globe for detailed information, or try asking about specific regions like "Middle East tensions" or "Ukraine situation".`;
+            }
+
+            addMessage('agent', response);
+        }
+
+        function highlightCountries(countries) {
+            // Reset all highlights
+            countryMeshes.forEach(mesh => {
+                mesh.material.opacity = 0.6;
+                mesh.scale.setScalar(1);
+            });
+
+            // Highlight specified countries
+            countries.forEach(country => {
+                if (countryMeshes.has(country)) {
+                    const mesh = countryMeshes.get(country);
+                    mesh.material.opacity = 1;
+                    mesh.scale.setScalar(1.5);
+                }
+            });
+        }
+
+        function addMessage(sender, content) {
+            const messagesContainer = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            messageDiv.innerHTML = `
+                <div class="message-content">${content}</div>
+                <div class="message-time">${timeString}</div>
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function addWelcomeMessage() {
+            // Initial welcome is already in HTML
+        }
+
+        function showLoading() {
+            const messagesContainer = document.getElementById('messages');
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'message agent';
+            loadingDiv.id = 'loading-message';
+            loadingDiv.innerHTML = `
+                <div class="loading-indicator">
+                    <span>Analyzing global intelligence</span>
+                    <div class="loading-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            `;
+            messagesContainer.appendChild(loadingDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function hideLoading() {
+            const loadingMessage = document.getElementById('loading-message');
+            if (loadingMessage) {
+                loadingMessage.remove();
+            }
+        }
+
+        function startNewsTicker() {
+            const ticker = document.getElementById('news-ticker');
+            let currentIndex = 0;
+            
+            function updateTicker() {
+                ticker.textContent = newsData[currentIndex];
+                currentIndex = (currentIndex + 1) % newsData.length;
+            }
+            
+            updateTicker();
+            setInterval(updateTicker, 8000);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            const container = document.getElementById('globe-container');
+            const w = container.clientWidth;
+            const h = container.clientHeight;
+            
+            camera.aspect = w / h;
+            camera.updateProjectionMatrix();
+            renderer.setSize(w, h);
+        });
+
+        // Make functions global
+        window.toggleVoiceRecording = toggleVoiceRecording;
+        window.sendMessage = sendMessage;
+        window.handleInputKeyPress = handleInputKeyPress;
+        window.setVisualizationMode = setVisualizationMode;
+        window.closeInfoPanel = closeInfoPanel;
+
+        // Additional utility functions for the ThreeGeoJSON integration
+        function drawThreeGeo(json, radius, shape, materialOptions, container) {
+            // This would be your existing threeGeoJSON.js function
+            // For this demo, we're using the country highlights instead
+            console.log('GeoJSON data loaded:', json.features?.length || 'No features');
+        }
+
+        // Simulated Cohere API integration
+        async function queryCohere(prompt) {
+            // In a real implementation, you would call the Cohere API here
+            // For now, we'll use the pattern matching above
+            return "This would be the Cohere API response with more sophisticated analysis.";
+        }
+
+        // Simulated News API integration  
+        async function fetchLatestNews(country = null) {
+            // In a real implementation, you would call a news API here
+            const sampleNews = {
+                ukraine: "Latest updates on diplomatic efforts and humanitarian aid",
+                russia: "Economic sanctions impact and international relations",
+                israel: "Regional security developments and peace initiatives",
+                default: "Global political developments and economic indicators"
+            };
+            
+            return sampleNews[country?.toLowerCase()] || sampleNews.default;
+        }
+
+    </script>
+</body>
+</html> -->
