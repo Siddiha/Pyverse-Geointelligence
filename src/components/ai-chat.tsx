@@ -93,8 +93,8 @@ export default function AiChat({ onClose }: AiChatProps) {
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-white/10">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-              <Bot className="h-5 w-5 text-white" />
+            <div className="w-10 h-10 bg-gradient-to-r from-white to-gray-300 rounded-full flex items-center justify-center">
+              <Bot className="h-5 w-5 text-black" />
             </div>
             <div>
               <h3 className="text-white font-medium">GeoIntel AI Assistant</h3>
@@ -125,20 +125,20 @@ export default function AiChat({ onClose }: AiChatProps) {
                   {/* Avatar */}
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                     message.role === 'user' 
-                      ? 'bg-blue-500' 
-                      : 'bg-gradient-to-r from-purple-500 to-pink-500'
+                      ? 'bg-white' 
+                      : 'bg-gradient-to-r from-gray-200 to-gray-400'
                   }`}>
                     {message.role === 'user' ? (
-                      <User className="h-4 w-4 text-white" />
+                      <User className="h-4 w-4 text-black" />
                     ) : (
-                      <Bot className="h-4 w-4 text-white" />
+                      <Bot className="h-4 w-4 text-black" />
                     )}
                   </div>
 
                   {/* Message */}
                   <div className={`p-3 rounded-lg ${
                     message.role === 'user'
-                      ? 'bg-blue-600 text-white'
+                      ? 'bg-white text-black'
                       : 'bg-white/10 text-gray-100'
                   }`}>
                     <p className="text-sm whitespace-pre-wrap">{message.content}</p>
@@ -158,8 +158,8 @@ export default function AiChat({ onClose }: AiChatProps) {
               className="flex justify-start"
             >
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-                  <Bot className="h-4 w-4 text-white" />
+                <div className="w-8 h-8 bg-gradient-to-r from-gray-200 to-gray-400 rounded-full flex items-center justify-center">
+                  <Bot className="h-4 w-4 text-black" />
                 </div>
                 <div className="bg-white/10 p-3 rounded-lg">
                   <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
@@ -180,13 +180,13 @@ export default function AiChat({ onClose }: AiChatProps) {
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Ask about global news, countries, or current events..."
-              className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white"
               disabled={loading}
             />
             <button
               onClick={handleSend}
               disabled={loading || !input.trim()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               <Send className="h-4 w-4" />
             </button>
