@@ -1,99 +1,204 @@
 'use client'
 
-import { useRef, useState } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber'
-import { OrbitControls, Sphere } from '@react-three/drei'
+import { useRef, useEffect, useState } from 'react'
 import * as THREE from 'three'
 import { motion } from 'framer-motion'
-import CountryNode from './country-node'
 import { countryCoordinates } from '@/lib/geo-data'
 
 interface GlobeProps {
   onCountryClick?: (country: string) => void
 }
 
-function Earth({ onCountryClick }: GlobeProps) {
-  const meshRef = useRef<THREE.Mesh>(null)
-  const [hovered, setHovered] = useState<string | null>(null)
-
-  // Rotate the Earth
-  useFrame(() => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y += 0.002
-    }
-  })
-
-  return (
-    <group>
-      {/* Main Earth sphere */}
-      <Sphere ref={meshRef} args={[5, 64, 64]} position={[0, 0, 0]}>
-        <meshPhongMaterial 
-          color="#1e40af"
-          shininess={100}
-        />
-      </Sphere>
-
-      {/* Atmosphere glow */}
-      <Sphere args={[5.1, 64, 64]} position={[0, 0, 0]}>
-        <meshBasicMaterial 
-          color="#87ceeb"
-          transparent
-          opacity={0.1}
-          side={THREE.BackSide}
-        />
-      </Sphere>
-
-      {/* Country nodes */}
-      {Object.entries(countryCoordinates).map(([country, coords]) => (
-        <CountryNode
-          key={country}
-          country={country}
-          lat={coords.lat}
-          lng={coords.lng}
-          onClick={() => onCountryClick?.(country)}
-          isHovered={hovered === country}
-          onHover={setHovered}
-        />
-      ))}
-
-      {/* Lighting */}
-      <ambientLight intensity={0.3} />
-      <directionalLight 
-        position={[10, 10, 5]} 
-        intensity={1}
-        castShadow
-      />
-      <pointLight position={[-10, -10, -5]} intensity={0.5} color="#4facfe" />
-    </group>
-  )
-}
-
 export default function InteractiveGlobe({ onCountryClick }: GlobeProps) {
+  const mountRef = useRef<HTMLDivElement>(null)
+  const sceneRef = useRef<THREE.Scene>()
+  const rendererRef = useRef<THREE.WebGLRenderer>()
+  const cameraRef = useRef<THREE.PerspectiveCamera>()
+  const globeRef = useRef<THREE.Mesh>()
+  const frameId = useRef<number>()
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
 
-  const handleCountryClick = (country: string) => {
-    setSelectedCountry(country)
-    onCountryClick?.(country)
-  }
+  useEffect(() => {
+    if (!mountRef.current) return
+
+    // Scene setup
+    const scene = new THREE.Scene()
+    scene.background = new THREE.Color(0x000011)
+    sceneRef.current = scene
+
+    // Camera setup
+    const camera = new THREE.PerspectiveCamera(
+      75,
+      mountRef.current.clientWidth / mountRef.current.clientHeight,
+      0.1,
+      1000
+    )
+    camera.position.z = 15
+    cameraRef.current = camera
+
+    // Renderer setup
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+    renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight)
+    renderer.setPixelRatio(window.devicePixelRatio)
+    mountRef.current.appendChild(renderer.domElement)
+    rendererRef.current = renderer
+
+    // Create Earth sphere
+    const geometry = new THREE.SphereGeometry(5, 64, 64)
+    const material = new THREE.MeshPhongMaterial({
+      color: 0x1e40af,
+      shininess: 100,
+      transparent: true,
+      opacity: 0.9
+    })
+    const globe = new THREE.Mesh(geometry, material)
+    scene.add(globe)
+    globeRef.current = globe
+
+    // Add atmosphere glow
+    const atmosphereGeometry = new THREE.SphereGeometry(5.1, 64, 64)
+    const atmosphereMaterial = new THREE.MeshBasicMaterial({
+      color: 0x87ceeb,
+      transparent: true,
+      opacity: 0.1,
+      side: THREE.BackSide
+    })
+    const atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial)
+    scene.add(atmosphere)
+
+    // Add country markers
+    Object.entries(countryCoordinates).forEach(([country, coords]) => {
+      const { lat, lng } = coords
+      
+      // Convert to spherical coordinates
+      const phi = (90 - lat) * (Math.PI / 180)
+      const theta = (lng + 180) * (Math.PI / 180)
+      
+      const radius = 5.2
+      const x = -(radius * Math.sin(phi) * Math.cos(theta))
+      const z = radius * Math.sin(phi) * Math.sin(theta)
+      const y = radius * Math.cos(phi)
+
+      // Create marker
+      const markerGeometry = new THREE.SphereGeometry(0.05, 8, 8)
+      const markerMaterial = new THREE.MeshBasicMaterial({
+        color: 0x74b9ff,
+        transparent: true,
+        opacity: 0.8
+      })
+      
+      const marker = new THREE.Mesh(markerGeometry, markerMaterial)
+      marker.position.set(x, y, z)
+      marker.userData = { country }
+      scene.add(marker)
+
+      // Add glow effect
+      const glowGeometry = new THREE.SphereGeometry(0.08, 8, 8)
+      const glowMaterial = new THREE.MeshBasicMaterial({
+        color: 0x74b9ff,
+        transparent: true,
+        opacity: 0.3
+      })
+      const glow = new THREE.Mesh(glowGeometry, glowMaterial)
+      glow.position.set(x, y, z)
+      scene.add(glow)
+    })
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.3)
+    scene.add(ambientLight)
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1)
+    directionalLight.position.set(10, 10, 5)
+    scene.add(directionalLight)
+
+    const pointLight = new THREE.PointLight(0x4facfe, 0.5)
+    pointLight.position.set(-10, -10, -5)
+    scene.add(pointLight)
+
+    // Mouse controls
+    let isDragging = false
+    let previousMousePosition = { x: 0, y: 0 }
+
+    const handleMouseDown = (event: MouseEvent) => {
+      isDragging = true
+      previousMousePosition = { x: event.clientX, y: event.clientY }
+    }
+
+    const handleMouseMove = (event: MouseEvent) => {
+      if (!isDragging || !globeRef.current) return
+
+      const deltaMove = {
+        x: event.clientX - previousMousePosition.x,
+        y: event.clientY - previousMousePosition.y
+      }
+
+      globeRef.current.rotation.y += deltaMove.x * 0.01
+      globeRef.current.rotation.x += deltaMove.y * 0.01
+
+      previousMousePosition = { x: event.clientX, y: event.clientY }
+    }
+
+    const handleMouseUp = () => {
+      isDragging = false
+    }
+
+    const handleWheel = (event: WheelEvent) => {
+      if (!cameraRef.current) return
+      
+      const delta = event.deltaY * 0.01
+      cameraRef.current.position.z = Math.max(8, Math.min(25, cameraRef.current.position.z + delta))
+    }
+
+    renderer.domElement.addEventListener('mousedown', handleMouseDown)
+    renderer.domElement.addEventListener('mousemove', handleMouseMove)
+    renderer.domElement.addEventListener('mouseup', handleMouseUp)
+    renderer.domElement.addEventListener('wheel', handleWheel)
+
+    // Animation loop
+    const animate = () => {
+      frameId.current = requestAnimationFrame(animate)
+      
+      // Auto-rotate globe slowly
+      if (globeRef.current && !isDragging) {
+        globeRef.current.rotation.y += 0.002
+      }
+      
+      renderer.render(scene, camera)
+    }
+    animate()
+
+    // Handle resize
+    const handleResize = () => {
+      if (!mountRef.current || !camera || !renderer) return
+      
+      camera.aspect = mountRef.current.clientWidth / mountRef.current.clientHeight
+      camera.updateProjectionMatrix()
+      renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight)
+    }
+    window.addEventListener('resize', handleResize)
+
+    // Cleanup
+    return () => {
+      if (frameId.current) {
+        cancelAnimationFrame(frameId.current)
+      }
+      if (mountRef.current && renderer.domElement) {
+        mountRef.current.removeChild(renderer.domElement)
+      }
+      renderer.domElement.removeEventListener('mousedown', handleMouseDown)
+      renderer.domElement.removeEventListener('mousemove', handleMouseMove)
+      renderer.domElement.removeEventListener('mouseup', handleMouseUp)
+      renderer.domElement.removeEventListener('wheel', handleWheel)
+      window.removeEventListener('resize', handleResize)
+      renderer.dispose()
+    }
+  }, [])
 
   return (
     <div className="w-full h-full relative">
-      <Canvas
-        camera={{ position: [0, 0, 15], fov: 45 }}
-        style={{ background: 'transparent' }}
-      >
-        <Earth onCountryClick={handleCountryClick} />
-        <OrbitControls 
-          enableZoom={true}
-          enablePan={false}
-          minDistance={8}
-          maxDistance={25}
-          autoRotate={false}
-          enableDamping={true}
-          dampingFactor={0.05}
-        />
-      </Canvas>
-
+      <div ref={mountRef} className="w-full h-full" />
+      
       {/* Selected Country Info */}
       {selectedCountry && (
         <motion.div
@@ -130,6 +235,21 @@ export default function InteractiveGlobe({ onCountryClick }: GlobeProps) {
             <span className="text-gray-400">Updates:</span>
             <span className="text-yellow-400">Real-time</span>
           </div>
+        </div>
+      </motion.div>
+
+      {/* Controls Info */}
+      <motion.div 
+        initial={{ x: -100, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ duration: 0.8, delay: 0.5 }}
+        className="absolute bottom-6 left-6 glass-effect p-4 rounded-xl"
+      >
+        <div className="text-sm text-gray-300 mb-2">Globe Controls</div>
+        <div className="space-y-2 text-xs text-gray-400">
+          <div>🖱️ Drag to rotate</div>
+          <div>🔍 Scroll to zoom</div>
+          <div>📍 Click markers for news</div>
         </div>
       </motion.div>
     </div>

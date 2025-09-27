@@ -1,10 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    serverComponentsExternalPackages: ['three']
-  },
-  transpilePackages: ['three'],
+  // Remove the conflicting serverComponentsExternalPackages from experimental
+  // and remove transpilePackages to avoid conflict
   webpack: (config) => {
+    // Handle canvas for server-side rendering
     config.externals = [...config.externals, { canvas: 'canvas' }];
     return config;
   },
