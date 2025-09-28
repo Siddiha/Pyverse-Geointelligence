@@ -2,26 +2,168 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Clock, Globe, TrendingUp, ExternalLink, AlertTriangle, Activity, Filter } from 'lucide-react'
-import { useNews } from '@/hooks/use-news'
-import type { NewsArticle } from '@/types/news'
+import { Clock, AlertTriangle, Activity, Filter, ExternalLink, TrendingUp } from 'lucide-react'
+
+interface NewsArticle {
+  id: string
+  title: string
+  summary: string
+  source: string
+  publishedAt: string
+  country: string
+  isBreaking: boolean
+  isTrending: boolean
+  category: string
+  url: string
+}
 
 interface NewsPanelProps {
   selectedCountry: string | null
 }
 
+// Enhanced mock news data
+const generateNewsData = (country?: string): NewsArticle[] => {
+  const globalNews = [
+    {
+      id: '1',
+      title: 'Global Military Exercise Signals Rising Tensions',
+      summary: 'NATO forces conduct largest joint military exercise in Eastern Europe since Cold War, raising concerns about regional stability.',
+      source: 'Reuters',
+      publishedAt: '2 minutes ago',
+      country: 'Global',
+      isBreaking: true,
+      isTrending: true,
+      category: 'Military',
+      url: '#'
+    },
+    {
+      id: '2',
+      title: 'Cyber Attack Targets Critical Infrastructure',
+      summary: 'State-sponsored hackers infiltrate power grid systems across multiple countries, highlighting cybersecurity vulnerabilities.',
+      source: 'BBC',
+      publishedAt: '15 minutes ago',
+      country: 'Global',
+      isBreaking: true,
+      isTrending: false,
+      category: 'Cybersecurity',
+      url: '#'
+    },
+    {
+      id: '3',
+      title: 'Economic Sanctions Expanded Against Authoritarian Regimes',
+      summary: 'G7 nations coordinate new financial restrictions targeting countries violating international law and human rights.',
+      source: 'Financial Times',
+      publishedAt: '1 hour ago',
+      country: 'Global',
+      isBreaking: false,
+      isTrending: true,
+      category: 'Economics',
+      url: '#'
+    },
+    {
+      id: '4',
+      title: 'Intelligence Report Reveals Foreign Election Interference',
+      summary: 'Classified documents expose sophisticated disinformation campaigns targeting democratic institutions worldwide.',
+      source: 'The Guardian',
+      publishedAt: '2 hours ago',
+      country: 'Global',
+      isBreaking: false,
+      isTrending: true,
+      category: 'Intelligence',
+      url: '#'
+    },
+    {
+      id: '5',
+      title: 'Arms Trade Monitoring Detects Illegal Weapons Shipments',
+      summary: 'International watchdog identifies suspicious military equipment transfers to conflict zones violating UN embargos.',
+      source: 'Al Jazeera',
+      publishedAt: '3 hours ago',
+      country: 'Global',
+      isBreaking: false,
+      isTrending: false,
+      category: 'Defense',
+      url: '#'
+    }
+  ]
+
+  const countrySpecificNews: Record<string, NewsArticle[]> = {
+    'Ukraine': [
+      {
+        id: 'ua1',
+        title: 'Ukraine Receives Advanced Defense Systems',
+        summary: 'Latest military aid package includes cutting-edge air defense technology to protect critical infrastructure.',
+        source: 'Kyiv Independent',
+        publishedAt: '30 minutes ago',
+        country: 'Ukraine',
+        isBreaking: true,
+        isTrending: true,
+        category: 'Defense',
+        url: '#'
+      },
+      {
+        id: 'ua2',
+        title: 'Humanitarian Corridors Established in Eastern Regions',
+        summary: 'International organizations coordinate safe passage for civilians in contested territories.',
+        source: 'Reuters',
+        publishedAt: '1 hour ago',
+        country: 'Ukraine',
+        isBreaking: false,
+        isTrending: true,
+        category: 'Humanitarian',
+        url: '#'
+      }
+    ],
+    'China': [
+      {
+        id: 'cn1',
+        title: 'China Conducts Large-Scale Military Drills Near Taiwan',
+        summary: 'PLA forces simulate amphibious assault scenarios in what analysts call escalatory military posturing.',
+        source: 'South China Morning Post',
+        publishedAt: '45 minutes ago',
+        country: 'China',
+        isBreaking: true,
+        isTrending: true,
+        category: 'Military',
+        url: '#'
+      },
+      {
+        id: 'cn2',
+        title: 'Technology Export Controls Tighten on Semiconductor Industry',
+        summary: 'New restrictions on advanced chip technology exports threaten global supply chain stability.',
+        source: 'Wall Street Journal',
+        publishedAt: '2 hours ago',
+        country: 'China',
+        isBreaking: false,
+        isTrending: true,
+        category: 'Technology',
+        url: '#'
+      }
+    ]
+  }
+
+  if (country && countrySpecificNews[country]) {
+    return [...countrySpecificNews[country], ...globalNews.slice(0, 3)]
+  }
+
+  return globalNews
+}
+
 export default function NewsPanel({ selectedCountry }: NewsPanelProps) {
-  const { news, loading, error, fetchNews } = useNews()
+  const [news, setNews] = useState<NewsArticle[]>([])
   const [filter, setFilter] = useState<'all' | 'breaking' | 'trending'>('all')
-  const [showFilters, setShowFilters] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [lastUpdate, setLastUpdate] = useState(new Date())
 
   useEffect(() => {
-    if (selectedCountry) {
-      fetchNews(selectedCountry)
-    } else {
-      fetchNews()
-    }
-  }, [selectedCountry, fetchNews])
+    setLoading(true)
+    // Simulate API call
+    setTimeout(() => {
+      const newsData = generateNewsData(selectedCountry || undefined)
+      setNews(newsData)
+      setLastUpdate(new Date())
+      setLoading(false)
+    }, 800)
+  }, [selectedCountry])
 
   const filteredNews = news.filter(article => {
     if (filter === 'breaking') return article.isBreaking
@@ -32,10 +174,23 @@ export default function NewsPanel({ selectedCountry }: NewsPanelProps) {
   const breakingCount = news.filter(n => n.isBreaking).length
   const trendingCount = news.filter(n => n.isTrending).length
 
+  const getCategoryColor = (category: string) => {
+    const colors: Record<string, string> = {
+      'Military': 'text-red-400 bg-red-900/20',
+      'Cybersecurity': 'text-purple-400 bg-purple-900/20',
+      'Economics': 'text-green-400 bg-green-900/20',
+      'Intelligence': 'text-orange-400 bg-orange-900/20',
+      'Defense': 'text-red-400 bg-red-900/20',
+      'Humanitarian': 'text-cyan-400 bg-cyan-900/20',
+      'Technology': 'text-indigo-400 bg-indigo-900/20'
+    }
+    return colors[category] || 'text-gray-400 bg-gray-900/20'
+  }
+
   return (
-    <div className="h-full flex flex-col bg-black">
+    <div className="h-full flex flex-col bg-black border-l border-gray-800">
       {/* Header */}
-      <div className="p-4 border-b border-gray-800">
+      <div className="p-4 border-b border-gray-800 bg-gray-900/50">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-gradient-to-r from-red-600 to-orange-500 rounded-lg flex items-center justify-center">
@@ -43,7 +198,7 @@ export default function NewsPanel({ selectedCountry }: NewsPanelProps) {
             </div>
             <div>
               <h2 className="text-lg font-bold text-white">
-                {selectedCountry ? `${selectedCountry}` : 'Global News'}
+                {selectedCountry ? `${selectedCountry} Intel` : 'Global Intelligence'}
               </h2>
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
@@ -53,7 +208,7 @@ export default function NewsPanel({ selectedCountry }: NewsPanelProps) {
           </div>
           
           <button
-            onClick={() => setShowFilters(!showFilters)}
+            onClick={() => setLoading(!loading)}
             className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
           >
             <Filter className="h-4 w-4 text-gray-400" />
@@ -62,54 +217,43 @@ export default function NewsPanel({ selectedCountry }: NewsPanelProps) {
 
         {/* Quick Stats */}
         <div className="grid grid-cols-3 gap-3 mb-4">
-          <div className="bg-gray-900 rounded-lg p-3 text-center">
+          <div className="bg-gray-800/50 rounded-lg p-3 text-center border border-gray-700">
             <div className="text-xl font-bold text-white">{news.length}</div>
             <div className="text-xs text-gray-400">Total</div>
           </div>
-          <div className="bg-red-900/30 rounded-lg p-3 text-center">
+          <div className="bg-red-900/30 rounded-lg p-3 text-center border border-red-800/30">
             <div className="text-xl font-bold text-red-400">{breakingCount}</div>
             <div className="text-xs text-red-400">Breaking</div>
           </div>
-          <div className="bg-orange-900/30 rounded-lg p-3 text-center">
+          <div className="bg-orange-900/30 rounded-lg p-3 text-center border border-orange-800/30">
             <div className="text-xl font-bold text-orange-400">{trendingCount}</div>
             <div className="text-xs text-orange-400">Trending</div>
           </div>
         </div>
 
         {/* Filter Tabs */}
-        <AnimatePresence>
-          {showFilters && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="overflow-hidden"
+        <div className="flex space-x-2">
+          {[
+            { key: 'all', label: 'All Intel', count: news.length },
+            { key: 'breaking', label: 'Breaking', count: breakingCount },
+            { key: 'trending', label: 'Trending', count: trendingCount }
+          ].map((filterType) => (
+            <button
+              key={filterType.key}
+              onClick={() => setFilter(filterType.key as any)}
+              className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-xs transition-all ${
+                filter === filterType.key
+                  ? 'bg-orange-600 text-white'
+                  : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+              }`}
             >
-              <div className="flex space-x-2 pb-3">
-                {[
-                  { key: 'all', label: 'All News', count: news.length },
-                  { key: 'breaking', label: 'Breaking', count: breakingCount },
-                  { key: 'trending', label: 'Trending', count: trendingCount }
-                ].map((filterType) => (
-                  <button
-                    key={filterType.key}
-                    onClick={() => setFilter(filterType.key as any)}
-                    className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-xs transition-all ${
-                      filter === filterType.key
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
-                    }`}
-                  >
-                    <span>{filterType.label}</span>
-                    <span className="bg-black/30 px-1.5 py-0.5 rounded text-xs">
-                      {filterType.count}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              <span>{filterType.label}</span>
+              <span className="bg-black/30 px-1.5 py-0.5 rounded text-xs">
+                {filterType.count}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* News List */}
@@ -117,23 +261,8 @@ export default function NewsPanel({ selectedCountry }: NewsPanelProps) {
         {loading && (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-              <p className="text-gray-400 text-sm">Loading intelligence feed...</p>
-            </div>
-          </div>
-        )}
-
-        {error && (
-          <div className="p-4 text-center">
-            <div className="bg-red-900/20 border border-red-800 rounded-lg p-4">
-              <AlertTriangle className="h-8 w-8 text-red-400 mx-auto mb-2" />
-              <p className="text-red-400 text-sm mb-2">Feed Connection Error</p>
-              <button 
-                onClick={() => fetchNews(selectedCountry || undefined)}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs rounded-lg transition-colors"
-              >
-                Reconnect Feed
-              </button>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-4"></div>
+              <p className="text-gray-400 text-sm">Gathering intelligence...</p>
             </div>
           </div>
         )}
@@ -143,11 +272,11 @@ export default function NewsPanel({ selectedCountry }: NewsPanelProps) {
             {filteredNews.map((article, index) => (
               <motion.div
                 key={article.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ delay: index * 0.05 }}
-                className="group bg-gray-900/50 hover:bg-gray-800/70 border border-gray-700 hover:border-gray-600 rounded-xl p-4 cursor-pointer transition-all duration-300"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ delay: index * 0.1 }}
+                className="group bg-gray-900/50 hover:bg-gray-800/70 border border-gray-700 hover:border-orange-600/50 rounded-xl p-4 cursor-pointer transition-all duration-300"
                 onClick={() => window.open(article.url, '_blank')}
               >
                 {/* Article Header */}
@@ -165,35 +294,26 @@ export default function NewsPanel({ selectedCountry }: NewsPanelProps) {
                       </div>
                     )}
                   </div>
-                  <ExternalLink className="h-4 w-4 text-gray-500 group-hover:text-gray-400 transition-colors" />
+                  <ExternalLink className="h-4 w-4 text-gray-500 group-hover:text-orange-400 transition-colors" />
                 </div>
 
                 {/* Title */}
-                <h3 className="text-white font-medium mb-2 leading-tight group-hover:text-blue-300 transition-colors">
+                <h3 className="text-white font-medium mb-2 leading-tight group-hover:text-orange-300 transition-colors">
                   {article.title}
                 </h3>
 
                 {/* Summary */}
-                <p className="text-gray-400 text-sm mb-3 leading-relaxed line-clamp-2">
+                <p className="text-gray-400 text-sm mb-3 leading-relaxed">
                   {article.summary}
                 </p>
 
-                {/* Category Badge */}
+                {/* Category and Meta */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      article.category === 'Breaking' ? 'bg-red-900/30 text-red-400' :
-                      article.category === 'Technology' ? 'bg-blue-900/30 text-blue-400' :
-                      article.category === 'Business' ? 'bg-green-900/30 text-green-400' :
-                      article.category === 'Environment' ? 'bg-emerald-900/30 text-emerald-400' :
-                      article.category === 'Science' ? 'bg-purple-900/30 text-purple-400' :
-                      article.category === 'Health' ? 'bg-pink-900/30 text-pink-400' :
-                      'bg-gray-900/30 text-gray-400'
-                    }`}>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(article.category)}`}>
                       {article.category}
                     </span>
                     <div className="flex items-center space-x-1 text-gray-500">
-                      <Globe className="h-3 w-3" />
                       <span className="text-xs">{article.source}</span>
                     </div>
                   </div>
@@ -204,18 +324,18 @@ export default function NewsPanel({ selectedCountry }: NewsPanelProps) {
                 </div>
 
                 {/* Hover Effect Line */}
-                <div className="h-0.5 bg-gradient-to-r from-blue-500 to-cyan-400 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 mt-3"></div>
+                <div className="h-0.5 bg-gradient-to-r from-orange-500 to-red-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 mt-3"></div>
               </motion.div>
             ))}
           </AnimatePresence>
 
           {filteredNews.length === 0 && !loading && (
             <div className="text-center py-12">
-              <Globe className="h-16 w-16 mx-auto mb-4 text-gray-600" />
+              <AlertTriangle className="h-16 w-16 mx-auto mb-4 text-gray-600" />
               <p className="text-gray-400 mb-2">No intelligence data found</p>
               <p className="text-gray-500 text-sm">
                 {selectedCountry 
-                  ? `No current news for ${selectedCountry}` 
+                  ? `No current intel for ${selectedCountry}` 
                   : 'Try adjusting your filters or check back later'
                 }
               </p>
@@ -225,14 +345,14 @@ export default function NewsPanel({ selectedCountry }: NewsPanelProps) {
       </div>
 
       {/* Footer Status */}
-      <div className="p-4 border-t border-gray-800">
+      <div className="p-4 border-t border-gray-800 bg-gray-900/30">
         <div className="flex items-center justify-between text-xs">
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            <span className="text-green-400">Live Feed Active</span>
+            <span className="text-green-400">Intel Feed Active</span>
           </div>
           <div className="text-gray-500">
-            Last updated: {new Date().toLocaleTimeString()}
+            Last update: {lastUpdate.toLocaleTimeString()}
           </div>
         </div>
       </div>

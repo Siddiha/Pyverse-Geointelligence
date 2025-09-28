@@ -48,8 +48,8 @@ export default function HomePage() {
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <div className="flex items-center space-x-3">
             <div className="relative">
-              <Globe className="h-8 w-8 text-blue-400" />
-              <div className="absolute inset-0 bg-blue-400 rounded-full animate-ping opacity-20"></div>
+              <Globe className="h-8 w-8 text-white-400" />
+              <div className="absolute inset-0 bg-white-400 rounded-full animate-ping opacity-20"></div>
             </div>
             <div>
               <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
@@ -66,7 +66,7 @@ export default function HomePage() {
             >
               <TrendingUp className="h-4 w-4 text-green-400" />
               <span className="text-sm text-gray-300">Live Updates</span>
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <div className="w-2 h-2 bg-white-400 rounded-full animate-pulse"></div>
             </motion.div>
             
             <motion.button
