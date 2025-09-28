@@ -272,3 +272,11 @@ Dockerfile.dev
 
 # Azure
 .azure/
+
+# Add these to your existing .gitignore
+SETUP.md
+COMPLETE_SETUP.md
+FIX_EVERYTHING.md
+QUICK_START.md
+*.bat
+*.cmd

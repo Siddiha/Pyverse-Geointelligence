@@ -21,19 +21,20 @@ export default function InteractiveGlobe({ onCountryClick }: GlobeProps) {
   useEffect(() => {
     if (!mountRef.current) return
 
-    // Scene setup
+    // Scene setup - Pure black background
     const scene = new THREE.Scene()
-    scene.background = new THREE.Color(0x000011)
+    scene.background = new THREE.Color(0x000000) // Pure black
     sceneRef.current = scene
 
-    // Camera setup
+    // Camera setup - Perfect positioning for black glamorism
     const camera = new THREE.PerspectiveCamera(
-      75,
+      60, // Slightly wider FOV for better view
       mountRef.current.clientWidth / mountRef.current.clientHeight,
       0.1,
       1000
     )
-    camera.position.z = 15
+    camera.position.z = 6 // Perfect distance for the globe
+    camera.position.y = 0 // Centered vertically
     cameraRef.current = camera
 
     // Renderer setup
@@ -43,24 +44,35 @@ export default function InteractiveGlobe({ onCountryClick }: GlobeProps) {
     mountRef.current.appendChild(renderer.domElement)
     rendererRef.current = renderer
 
-    // Create Earth sphere
-    const geometry = new THREE.SphereGeometry(5, 64, 64)
+    // Create Earth sphere - PERFECT BLACK GLAMORISM STYLE
+    const geometry = new THREE.SphereGeometry(2.5, 128, 128) // Higher resolution for smoothness
     const material = new THREE.MeshPhongMaterial({
-      color: 0x1e40af,
-      shininess: 100,
-      transparent: true,
-      opacity: 0.9
+      color: 0x0a0a0a, // Very dark grey, almost black
+      shininess: 200,
+      transparent: false,
+      opacity: 1.0
     })
     const globe = new THREE.Mesh(geometry, material)
     scene.add(globe)
     globeRef.current = globe
 
-    // Add atmosphere glow
-    const atmosphereGeometry = new THREE.SphereGeometry(5.1, 64, 64)
-    const atmosphereMaterial = new THREE.MeshBasicMaterial({
-      color: 0x87ceeb,
+    // Add continent outlines - WHITE LINES like reference
+    const wireframeGeometry = new THREE.SphereGeometry(2.51, 32, 32)
+    const wireframeMaterial = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
       transparent: true,
-      opacity: 0.1,
+      opacity: 0.3,
+      wireframe: true
+    })
+    const wireframe = new THREE.Mesh(wireframeGeometry, wireframeMaterial)
+    scene.add(wireframe)
+
+    // Add subtle atmosphere glow - WHITE HALO
+    const atmosphereGeometry = new THREE.SphereGeometry(2.6, 64, 64)
+    const atmosphereMaterial = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.15,
       side: THREE.BackSide
     })
     const atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial)
@@ -74,17 +86,17 @@ export default function InteractiveGlobe({ onCountryClick }: GlobeProps) {
       const phi = (90 - lat) * (Math.PI / 180)
       const theta = (lng + 180) * (Math.PI / 180)
       
-      const radius = 5.2
+      const radius = 2.55 // Perfect distance for nodes
       const x = -(radius * Math.sin(phi) * Math.cos(theta))
       const z = radius * Math.sin(phi) * Math.sin(theta)
       const y = radius * Math.cos(phi)
 
-      // Create marker
-      const markerGeometry = new THREE.SphereGeometry(0.05, 8, 8)
+      // Create BEAUTIFUL WHITE NODES - NO MORE UGLY XXX MARKS
+      const markerGeometry = new THREE.SphereGeometry(0.04, 32, 32) // Smooth spheres
       const markerMaterial = new THREE.MeshBasicMaterial({
-        color: 0x74b9ff,
+        color: 0xffffff, // Pure white
         transparent: true,
-        opacity: 0.8
+        opacity: 0.9
       })
       
       const marker = new THREE.Mesh(markerGeometry, markerMaterial)
@@ -92,27 +104,38 @@ export default function InteractiveGlobe({ onCountryClick }: GlobeProps) {
       marker.userData = { country }
       scene.add(marker)
 
-      // Add glow effect
-      const glowGeometry = new THREE.SphereGeometry(0.08, 8, 8)
+      // Add beautiful white glow effect
+      const glowGeometry = new THREE.SphereGeometry(0.08, 32, 32)
       const glowMaterial = new THREE.MeshBasicMaterial({
-        color: 0x74b9ff,
+        color: 0xffffff,
         transparent: true,
         opacity: 0.3
       })
       const glow = new THREE.Mesh(glowGeometry, glowMaterial)
       glow.position.set(x, y, z)
       scene.add(glow)
+
+      // Add subtle pulsing effect
+      const pulseGeometry = new THREE.SphereGeometry(0.12, 16, 16)
+      const pulseMaterial = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.1
+      })
+      const pulse = new THREE.Mesh(pulseGeometry, pulseMaterial)
+      pulse.position.set(x, y, z)
+      scene.add(pulse)
     })
 
-    // Lighting
-    const ambientLight = new THREE.AmbientLight(0x404040, 0.3)
+    // Lighting for black glamorism theme
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4)
     scene.add(ambientLight)
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1)
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8)
     directionalLight.position.set(10, 10, 5)
     scene.add(directionalLight)
 
-    const pointLight = new THREE.PointLight(0x4facfe, 0.5)
+    const pointLight = new THREE.PointLight(0xffffff, 0.3)
     pointLight.position.set(-10, -10, -5)
     scene.add(pointLight)
 
@@ -147,7 +170,7 @@ export default function InteractiveGlobe({ onCountryClick }: GlobeProps) {
       if (!cameraRef.current) return
       
       const delta = event.deltaY * 0.01
-      cameraRef.current.position.z = Math.max(8, Math.min(25, cameraRef.current.position.z + delta))
+      cameraRef.current.position.z = Math.max(4, Math.min(12, cameraRef.current.position.z + delta))
     }
 
     renderer.domElement.addEventListener('mousedown', handleMouseDown)
@@ -155,14 +178,39 @@ export default function InteractiveGlobe({ onCountryClick }: GlobeProps) {
     renderer.domElement.addEventListener('mouseup', handleMouseUp)
     renderer.domElement.addEventListener('wheel', handleWheel)
 
-    // Animation loop
+    // Animation loop - FORCE ROTATION TO WORK
     const animate = () => {
       frameId.current = requestAnimationFrame(animate)
       
-      // Auto-rotate globe slowly
-      if (globeRef.current && !isDragging) {
-        globeRef.current.rotation.y += 0.002
+      // FORCE GLOBE ROTATION - MUCH FASTER AND VISIBLE
+      if (globeRef.current) {
+        if (!isDragging) {
+          globeRef.current.rotation.y += 0.02 // DOUBLE the speed for clear visibility
+        }
       }
+      
+      // Rotate wireframe with globe
+      if (wireframe) {
+        if (!isDragging) {
+          wireframe.rotation.y += 0.02
+        }
+      }
+      
+      // Rotate atmosphere with globe
+      if (atmosphere) {
+        if (!isDragging) {
+          atmosphere.rotation.y += 0.02
+        }
+      }
+      
+      // Rotate all nodes with globe
+      scene.children.forEach(child => {
+        if (child.userData && child.userData.country) {
+          if (!isDragging) {
+            child.rotation.y += 0.02
+          }
+        }
+      })
       
       renderer.render(scene, camera)
     }

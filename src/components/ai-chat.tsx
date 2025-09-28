@@ -211,7 +211,7 @@ Please specify which area you'd like me to focus on, or ask about a specific cou
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-700 bg-gray-800/50">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-orange-600 to-red-600 rounded-full flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
               <Bot className="h-5 w-5 text-white" />
             </div>
             <div>
@@ -255,21 +255,21 @@ Please specify which area you'd like me to focus on, or ask about a specific cou
                   {/* Avatar */}
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                     message.role === 'user' 
-                      ? 'bg-orange-600' 
-                      : 'bg-gradient-to-r from-orange-600 to-red-600'
+                      ? 'bg-blue-500' 
+                      : 'bg-gradient-to-r from-purple-500 to-pink-500'
                   }`}>
                     {message.role === 'user' ? (
-                      <User className="h-4 w-4 text-white" />
+                      <User className="h-4 w-4 text-black" />
                     ) : (
-                      <Bot className="h-4 w-4 text-white" />
+                      <Bot className="h-4 w-4 text-black" />
                     )}
                   </div>
 
                   {/* Message */}
                   <div className={`p-4 rounded-lg ${
                     message.role === 'user'
-                      ? 'bg-orange-600 text-white'
-                      : 'bg-gray-800/70 text-gray-100 border border-gray-700'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white/10 text-gray-100'
                   }`}>
                     <div className="text-sm whitespace-pre-wrap leading-relaxed">
                       {message.content}
@@ -290,7 +290,7 @@ Please specify which area you'd like me to focus on, or ask about a specific cou
               className="flex justify-start"
             >
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-gradient-to-r from-orange-600 to-red-600 rounded-full flex items-center justify-center">
+                <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
                   <Bot className="h-4 w-4 text-white" />
                 </div>
                 <div className="bg-gray-800/70 border border-gray-700 p-4 rounded-lg">
@@ -331,14 +331,14 @@ Please specify which area you'd like me to focus on, or ask about a specific cou
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Ask about global events, conflicts, or intelligence analysis..."
-              className="flex-1 bg-gray-800/50 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              placeholder="Ask about global news, countries, or current events..."
+              className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               disabled={loading}
             />
             <button
               onClick={handleSend}
               disabled={loading || !input.trim()}
-              className="px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center space-x-2"
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />

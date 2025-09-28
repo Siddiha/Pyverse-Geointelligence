@@ -10,7 +10,7 @@ const InteractiveGlobe = dynamic(() => import('@/components/globe-3d'), {
   ssr: false,
   loading: () => (
     <div className="flex items-center justify-center h-full">
-      <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+      <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white"></div>
     </div>
   )
 })
@@ -37,44 +37,46 @@ export default function HomePage() {
   }
 
   return (
-    <div className="h-screen w-full flex flex-col bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
+    <div className="h-screen w-full flex flex-col bg-black overflow-hidden">
       {/* Header */}
       <motion.header 
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.8 }}
-        className="glass-effect border-b border-white/10 p-4 z-50"
+        className="bg-black/90 backdrop-blur-xl border-b border-white/20 p-4 z-50"
       >
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <div className="flex items-center space-x-3">
             <div className="relative">
-              <Globe className="h-8 w-8 text-white-400" />
-              <div className="absolute inset-0 bg-white-400 rounded-full animate-ping opacity-20"></div>
+              <Globe className="h-8 w-8 text-blue-400" />
+              <div className="absolute inset-0 bg-blue-400 rounded-full animate-ping opacity-20"></div>
             </div>
             <div>
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                GeoIntel AI
+              <h1 className="text-2xl font-bold text-white">
+                Tunnel
               </h1>
-              <p className="text-xs text-gray-400">Global Intelligence Agent</p>
+              <p className="text-xs text-gray-400">Prospects View</p>
             </div>
           </div>
           
           <div className="flex items-center space-x-4">
             <motion.div 
               whileHover={{ scale: 1.05 }}
-              className="flex items-center space-x-2 glass-effect px-3 py-2 rounded-lg"
+              className="flex items-center space-x-2 bg-white/10 hover:bg-white/20 px-3 py-2 rounded-lg transition-all duration-300"
             >
-              <TrendingUp className="h-4 w-4 text-green-400" />
+              <TrendingUp className="h-4 w-4 text-white" />
               <span className="text-sm text-gray-300">Live Updates</span>
-              <div className="w-2 h-2 bg-white-400 rounded-full animate-pulse"></div>
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
             </motion.div>
             
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setIsVoiceActive(!isVoiceActive)}
-              className={`glass-effect p-2 rounded-lg transition-colors ${
-                isVoiceActive ? 'bg-red-500/20 text-red-400' : 'hover:bg-white/10 text-blue-400'
+              className={`p-3 rounded-lg transition-all duration-300 ${
+                isVoiceActive 
+                  ? 'bg-red-500/20 text-red-400 border border-red-500/30' 
+                  : 'bg-white/10 hover:bg-white/20 text-white border border-white/20'
               }`}
             >
               <Mic className="h-5 w-5" />
@@ -84,9 +86,9 @@ export default function HomePage() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setIsChatOpen(!isChatOpen)}
-              className="glass-effect p-2 rounded-lg hover:bg-white/10 transition-colors"
+              className="p-3 rounded-lg bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-all duration-300"
             >
-              <MessageCircle className="h-5 w-5 text-purple-400" />
+              <MessageCircle className="h-5 w-5" />
             </motion.button>
           </div>
         </div>
@@ -99,12 +101,12 @@ export default function HomePage() {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 1, delay: 0.2 }}
-          className="flex-1 relative globe-container"
+          className="flex-1 relative bg-black"
         >
           <Suspense fallback={
             <div className="h-full flex items-center justify-center">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white mx-auto mb-4"></div>
                 <p className="text-gray-400">Loading Earth...</p>
               </div>
             </div>
@@ -117,7 +119,7 @@ export default function HomePage() {
             initial={{ x: -100, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.5 }}
-            className="absolute bottom-6 left-6 glass-effect p-4 rounded-xl"
+            className="absolute bottom-6 left-6 bg-black/80 backdrop-blur-xl border border-white/20 p-4 rounded-xl"
           >
             <div className="text-sm text-gray-300 mb-2">Globe Controls</div>
             <div className="space-y-2 text-xs text-gray-400">
@@ -133,7 +135,7 @@ export default function HomePage() {
           initial={{ x: 400, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.8, delay: 0.4 }}
-          className="w-96 glass-effect border-l border-white/10 flex flex-col"
+          className="w-96 bg-black/90 backdrop-blur-xl border-l border-white/20 flex flex-col"
         >
           <Suspense fallback={
             <div className="h-full flex items-center justify-center">
