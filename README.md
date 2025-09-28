@@ -2,13 +2,15 @@
 
 <div align="center">
 
-<img width="1917" height="875" alt="Image" src="https://github.com/user-attachments/assets/a38163f2-cf22-4f37-acc7-543ff8abab09" />
+
 **Real-time Geopolitical Intelligence • AI-Powered Analysis • Global Monitoring**
 
 [![Next.js](https://img.shields.io/badge/Next.js-14.0-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org)
 [![Three.js](https://img.shields.io/badge/Three.js-0.170-orange?style=for-the-badge&logo=three.js)](https://threejs.org)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.3-cyan?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com)
+
+<img width="1917" height="875" alt="Image" src="https://github.com/user-attachments/assets/a38163f2-cf22-4f37-acc7-543ff8abab09" />
 
 </div>
 
