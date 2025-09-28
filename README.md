@@ -2,8 +2,7 @@
 
 <div align="center">
 
-![GeoIntel AI Banner](https://via.placeholder.com/800x200/000000/f97316?text=GeoIntel+AI+-+Global+Intelligence+Network)
-
+<img width="1917" height="875" alt="Image" src="https://github.com/user-attachments/assets/a38163f2-cf22-4f37-acc7-543ff8abab09" />
 **Real-time Geopolitical Intelligence • AI-Powered Analysis • Global Monitoring**
 
 [![Next.js](https://img.shields.io/badge/Next.js-14.0-black?style=for-the-badge&logo=next.js)](https://nextjs.org)
