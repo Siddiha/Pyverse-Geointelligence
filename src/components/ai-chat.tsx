@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Send, Bot, User, X, Loader2, AlertCircle } from 'lucide-react'
+import { useAiChat } from '@/hooks/use-ai-chat'
 
 interface AiChatProps {
   onClose: () => void
@@ -26,119 +27,13 @@ export default function AiChat({ onClose }: AiChatProps) {
     }
   ])
   
-  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const { sendMessage, loading } = useAiChat()
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
-
-  const sendMessage = async (message: string) => {
-    try {
-      setError(null)
-      
-      // For demo purposes, we'll use a simple response system
-      // Replace this with your actual API call
-      const response = await simulateAIResponse(message)
-      
-      return response
-    } catch (error) {
-      throw new Error('Failed to get AI response')
-    }
-  }
-
-  // Simulate AI response - replace with actual Cohere API call
-  const simulateAIResponse = async (message: string): Promise<string> => {
-    await new Promise(resolve => setTimeout(resolve, 2000)) // Simulate API delay
-
-    const lowerMessage = message.toLowerCase()
-    
-    if (lowerMessage.includes('ukraine') || lowerMessage.includes('russia')) {
-      return `🔴 **INTELLIGENCE BRIEFING: UKRAINE-RUSSIA CONFLICT**
-
-**Current Status:** Active military operations ongoing in eastern regions
-**Key Developments:**
-• International military aid continues to flow to Ukrainian forces
-• Diplomatic efforts focus on humanitarian corridors
-• Economic sanctions remain in effect against Russian entities
-
-**Assessment:** Situation remains highly volatile with potential for escalation. Recommend continued monitoring of border regions and supply line activities.
-
-**Sources:** NATO Intelligence, OSINT analysis, diplomatic channels`
-    }
-    
-    if (lowerMessage.includes('china') || lowerMessage.includes('taiwan')) {
-      return `📊 **INTELLIGENCE BRIEFING: CHINA-TAIWAN TENSIONS**
-
-**Current Status:** Elevated military posturing in Taiwan Strait
-**Key Developments:**
-• Increased PLA naval activities near Taiwan territorial waters
-• Semiconductor export controls affecting regional tech supply chains
-• International diplomatic pressure for peaceful resolution
-
-**Assessment:** Tensions remain high but within manageable parameters. Monitor for unusual military buildup or policy changes.
-
-**Sources:** Regional intelligence networks, commercial satellite imagery`
-    }
-    
-    if (lowerMessage.includes('middle east') || lowerMessage.includes('israel')) {
-      return `⚡ **INTELLIGENCE BRIEFING: MIDDLE EAST SITUATION**
-
-**Current Status:** Multiple regional flashpoints requiring monitoring
-**Key Developments:**
-• Ongoing security operations in contested territories
-• International mediation efforts continue
-• Regional power dynamics shifting with new alliances
-
-**Assessment:** Complex multi-actor situation with potential for rapid escalation. Recommend close monitoring of all parties.
-
-**Sources:** Regional intelligence assets, diplomatic reporting`
-    }
-    
-    if (lowerMessage.includes('cyber') || lowerMessage.includes('hack')) {
-      return `🔒 **CYBERSECURITY INTELLIGENCE BRIEFING**
-
-**Current Status:** Elevated cyber threat environment globally
-**Key Developments:**
-• State-sponsored APT groups targeting critical infrastructure
-• Ransomware attacks on government and private sector increasing
-• Attribution analysis ongoing for recent major incidents
-
-**Assessment:** Cyber threats pose significant risk to national security. Enhanced defensive measures recommended.
-
-**Sources:** Cybersecurity agencies, threat intelligence platforms`
-    }
-    
-    if (lowerMessage.includes('economic') || lowerMessage.includes('sanctions')) {
-      return `💰 **ECONOMIC INTELLIGENCE BRIEFING**
-
-**Current Status:** Global economic pressures affecting geopolitical stability
-**Key Developments:**
-• Sanctions regimes impacting international trade flows
-• Energy market volatility affecting regional alliances
-• Supply chain disruptions creating new dependencies
-
-**Assessment:** Economic factors increasingly driving geopolitical decisions. Monitor for policy shifts.
-
-**Sources:** Financial intelligence, trade data analysis`
-    }
-    
-    // General response
-    return `🤖 **AI ANALYSIS**
-
-I understand you're asking about "${message}". Based on current intelligence feeds, I can provide analysis on:
-
-• Global conflict zones and tension areas
-• Cybersecurity threats and incidents  
-• Economic sanctions and trade impacts
-• Military movements and exercises
-• Diplomatic developments
-
-Please specify which area you'd like me to focus on, or ask about a specific country or region for a detailed intelligence briefing.
-
-**Note:** All assessments are based on open-source intelligence and should not be considered classified information.`
-  }
 
   const handleSend = async () => {
     if (!input.trim() || loading) return
@@ -150,12 +45,13 @@ Please specify which area you'd like me to focus on, or ask about a specific cou
       timestamp: new Date()
     }
 
+    const messageToSend = input
     setMessages(prev => [...prev, userMessage])
     setInput('')
-    setLoading(true)
 
     try {
-      const response = await sendMessage(input)
+      setError(null)
+      const response = await sendMessage(messageToSend)
       
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -175,8 +71,6 @@ Please specify which area you'd like me to focus on, or ask about a specific cou
       }
 
       setMessages(prev => [...prev, errorMessage])
-    } finally {
-      setLoading(false)
     }
   }
 

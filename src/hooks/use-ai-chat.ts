@@ -2,9 +2,11 @@ import { useState, useCallback } from 'react'
 
 export const useAiChat = () => {
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const sendMessage = useCallback(async (message: string): Promise<string> => {
     setLoading(true)
+    setError(null)
     
     try {
       const response = await fetch('/api/ai/chat', {
@@ -16,7 +18,8 @@ export const useAiChat = () => {
       })
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`)
       }
 
       const data = await response.json()
@@ -27,8 +30,10 @@ export const useAiChat = () => {
 
       return data.data.response
     } catch (error) {
-      console.error('AI Chat error:', error)
-      return 'Sorry, I encountered an error. Please try again.'
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+      console.error('AI Chat error:', errorMessage)
+      setError(errorMessage)
+      throw error
     } finally {
       setLoading(false)
     }
@@ -36,6 +41,7 @@ export const useAiChat = () => {
 
   return {
     sendMessage,
-    loading
+    loading,
+    error
   }
 }
