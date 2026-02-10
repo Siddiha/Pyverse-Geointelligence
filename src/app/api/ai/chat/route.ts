@@ -22,7 +22,7 @@ interface OpenAIResponse {
   }>
 }
 
-// Cohere API function
+// Cohere API function (using Chat API v2)
 async function getCohereResponse(message: string, context?: string): Promise<string> {
   if (!COHERE_API_KEY) {
     throw new Error('Cohere API key not configured')
@@ -40,21 +40,20 @@ Context: ${context || 'General geopolitical analysis'}
 Respond with structured intelligence briefings when appropriate.`
 
   try {
-    const response = await fetch('https://api.cohere.ai/v1/generate', {
+    const response = await fetch('https://api.cohere.ai/v2/chat', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${COHERE_API_KEY}`,
-        'Content-Type': 'application/json',
-        'Cohere-Version': '2022-12-06'
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: 'command',
-        prompt: `${systemPrompt}\n\nUser: ${message}\n\nAssistant:`,
+        model: 'command-r',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: message }
+        ],
         max_tokens: 500,
-        temperature: 0.3,
-        k: 0,
-        stop_sequences: ["\nUser:"],
-        return_likelihoods: 'NONE'
+        temperature: 0.3
       })
     })
 
@@ -65,7 +64,7 @@ Respond with structured intelligence briefings when appropriate.`
     }
 
     const data = await response.json()
-    return data.generations[0]?.text?.trim() || 'No response generated'
+    return data.message?.content?.[0]?.text?.trim() || 'No response generated'
   } catch (error) {
     console.error('Cohere API request failed:', error)
     throw error
