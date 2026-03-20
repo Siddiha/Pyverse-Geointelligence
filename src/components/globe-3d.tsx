@@ -11,249 +11,187 @@ interface GlobeProps {
 
 export default function InteractiveGlobe({ onCountryClick }: GlobeProps) {
   const mountRef = useRef<HTMLDivElement>(null)
-  const sceneRef = useRef<THREE.Scene>()
-  const rendererRef = useRef<THREE.WebGLRenderer>()
-  const cameraRef = useRef<THREE.PerspectiveCamera>()
-  const globeRef = useRef<THREE.Mesh>()
   const frameId = useRef<number>()
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
 
   useEffect(() => {
     if (!mountRef.current) return
 
-    // Scene setup - Pure black background
+    const mount = mountRef.current
+    const width = mount.clientWidth
+    const height = mount.clientHeight
+
+    // Scene
     const scene = new THREE.Scene()
-    scene.background = new THREE.Color(0x000000) // Pure black
-    sceneRef.current = scene
+    scene.background = new THREE.Color(0x000000)
 
-    // Camera setup - Perfect positioning for black glamorism
-    const camera = new THREE.PerspectiveCamera(
-      60, // Slightly wider FOV for better view
-      mountRef.current.clientWidth / mountRef.current.clientHeight,
-      0.1,
-      1000
-    )
-    camera.position.z = 6 // Perfect distance for the globe
-    camera.position.y = 0 // Centered vertically
-    cameraRef.current = camera
+    // Camera
+    const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 1000)
+    camera.position.z = 6
 
-    // Renderer setup
+    // Renderer
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
-    renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight)
+    renderer.setSize(width, height)
     renderer.setPixelRatio(window.devicePixelRatio)
-    mountRef.current.appendChild(renderer.domElement)
-    rendererRef.current = renderer
+    mount.appendChild(renderer.domElement)
 
-    // Create Earth sphere - PERFECT BLACK GLAMORISM STYLE
-    const geometry = new THREE.SphereGeometry(2.5, 128, 128) // Higher resolution for smoothness
-    const material = new THREE.MeshPhongMaterial({
-      color: 0x0a0a0a, // Very dark grey, almost black
-      shininess: 200,
-      transparent: false,
-      opacity: 1.0
-    })
-    const globe = new THREE.Mesh(geometry, material)
-    scene.add(globe)
-    globeRef.current = globe
+    // ── Single group — everything rotates together ──
+    const globeGroup = new THREE.Group()
+    scene.add(globeGroup)
 
-    // Add continent outlines - WHITE LINES like reference
-    const wireframeGeometry = new THREE.SphereGeometry(2.51, 32, 32)
-    const wireframeMaterial = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
-      transparent: true,
-      opacity: 0.3,
-      wireframe: true
-    })
-    const wireframe = new THREE.Mesh(wireframeGeometry, wireframeMaterial)
-    scene.add(wireframe)
+    // Globe sphere
+    const globeMesh = new THREE.Mesh(
+      new THREE.SphereGeometry(2.5, 128, 128),
+      new THREE.MeshPhongMaterial({ color: 0x0a0a0a, shininess: 200 })
+    )
+    globeGroup.add(globeMesh)
 
-    // Add subtle atmosphere glow - WHITE HALO
-    const atmosphereGeometry = new THREE.SphereGeometry(2.6, 64, 64)
-    const atmosphereMaterial = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
-      transparent: true,
-      opacity: 0.15,
-      side: THREE.BackSide
-    })
-    const atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial)
-    scene.add(atmosphere)
+    // Wireframe overlay
+    const wireframe = new THREE.Mesh(
+      new THREE.SphereGeometry(2.51, 32, 32),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3, wireframe: true })
+    )
+    globeGroup.add(wireframe)
 
-    // Add country markers
+    // Atmosphere glow
+    const atmosphere = new THREE.Mesh(
+      new THREE.SphereGeometry(2.6, 64, 64),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.15, side: THREE.BackSide })
+    )
+    globeGroup.add(atmosphere)
+
+    // Country markers — stored for raycasting
+    const markers: THREE.Mesh[] = []
+
     Object.entries(countryCoordinates).forEach(([country, coords]) => {
       const { lat, lng } = coords
-      
-      // Convert to spherical coordinates
       const phi = (90 - lat) * (Math.PI / 180)
       const theta = (lng + 180) * (Math.PI / 180)
-      
-      const radius = 2.55 // Perfect distance for nodes
-      const x = -(radius * Math.sin(phi) * Math.cos(theta))
-      const z = radius * Math.sin(phi) * Math.sin(theta)
-      const y = radius * Math.cos(phi)
+      const r = 2.55
+      const x = -(r * Math.sin(phi) * Math.cos(theta))
+      const z = r * Math.sin(phi) * Math.sin(theta)
+      const y = r * Math.cos(phi)
 
-      // Create BEAUTIFUL WHITE NODES - NO MORE UGLY XXX MARKS
-      const markerGeometry = new THREE.SphereGeometry(0.04, 32, 32) // Smooth spheres
-      const markerMaterial = new THREE.MeshBasicMaterial({
-        color: 0xffffff, // Pure white
-        transparent: true,
-        opacity: 0.9
-      })
-      
-      const marker = new THREE.Mesh(markerGeometry, markerMaterial)
+      const marker = new THREE.Mesh(
+        new THREE.SphereGeometry(0.05, 16, 16),
+        new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9 })
+      )
       marker.position.set(x, y, z)
       marker.userData = { country }
-      scene.add(marker)
+      globeGroup.add(marker)
+      markers.push(marker)
 
-      // Add beautiful white glow effect
-      const glowGeometry = new THREE.SphereGeometry(0.08, 32, 32)
-      const glowMaterial = new THREE.MeshBasicMaterial({
-        color: 0xffffff,
-        transparent: true,
-        opacity: 0.3
-      })
-      const glow = new THREE.Mesh(glowGeometry, glowMaterial)
+      // Glow ring
+      const glow = new THREE.Mesh(
+        new THREE.SphereGeometry(0.09, 16, 16),
+        new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.25 })
+      )
       glow.position.set(x, y, z)
-      scene.add(glow)
-
-      // Add subtle pulsing effect
-      const pulseGeometry = new THREE.SphereGeometry(0.12, 16, 16)
-      const pulseMaterial = new THREE.MeshBasicMaterial({
-        color: 0xffffff,
-        transparent: true,
-        opacity: 0.1
-      })
-      const pulse = new THREE.Mesh(pulseGeometry, pulseMaterial)
-      pulse.position.set(x, y, z)
-      scene.add(pulse)
+      globeGroup.add(glow)
     })
 
-    // Lighting for black glamorism theme
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4)
-    scene.add(ambientLight)
-
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8)
-    directionalLight.position.set(10, 10, 5)
-    scene.add(directionalLight)
-
+    // Lighting
+    scene.add(new THREE.AmbientLight(0xffffff, 0.4))
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8)
+    dirLight.position.set(10, 10, 5)
+    scene.add(dirLight)
     const pointLight = new THREE.PointLight(0xffffff, 0.3)
     pointLight.position.set(-10, -10, -5)
     scene.add(pointLight)
 
-    // Mouse controls
+    // ── Mouse / drag state ──
     let isDragging = false
-    let previousMousePosition = { x: 0, y: 0 }
+    let didDrag = false
+    let prevMouse = { x: 0, y: 0 }
 
-    const handleMouseDown = (event: MouseEvent) => {
+    const handleMouseDown = (e: MouseEvent) => {
       isDragging = true
-      previousMousePosition = { x: event.clientX, y: event.clientY }
+      didDrag = false
+      prevMouse = { x: e.clientX, y: e.clientY }
     }
 
-    const handleMouseMove = (event: MouseEvent) => {
-      if (!isDragging || !globeRef.current) return
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging) return
+      const dx = e.clientX - prevMouse.x
+      const dy = e.clientY - prevMouse.y
+      if (Math.abs(dx) > 2 || Math.abs(dy) > 2) didDrag = true
+      globeGroup.rotation.y += dx * 0.008
+      globeGroup.rotation.x += dy * 0.008
+      prevMouse = { x: e.clientX, y: e.clientY }
+    }
 
-      const deltaMove = {
-        x: event.clientX - previousMousePosition.x,
-        y: event.clientY - previousMousePosition.y
+    const handleMouseUp = (e: MouseEvent) => {
+      if (!didDrag) {
+        // It was a click — check for marker hit
+        const rect = renderer.domElement.getBoundingClientRect()
+        const mouse = new THREE.Vector2(
+          ((e.clientX - rect.left) / rect.width) * 2 - 1,
+          -((e.clientY - rect.top) / rect.height) * 2 + 1
+        )
+        const raycaster = new THREE.Raycaster()
+        raycaster.setFromCamera(mouse, camera)
+        raycaster.params.Points = { threshold: 0.1 }
+
+        const hits = raycaster.intersectObjects(markers)
+        if (hits.length > 0) {
+          const country = hits[0].object.userData.country as string
+          setSelectedCountry(country)
+          onCountryClick?.(country)
+        }
       }
-
-      globeRef.current.rotation.y += deltaMove.x * 0.01
-      globeRef.current.rotation.x += deltaMove.y * 0.01
-
-      previousMousePosition = { x: event.clientX, y: event.clientY }
-    }
-
-    const handleMouseUp = () => {
       isDragging = false
     }
 
-    const handleWheel = (event: WheelEvent) => {
-      if (!cameraRef.current) return
-      
-      const delta = event.deltaY * 0.01
-      cameraRef.current.position.z = Math.max(4, Math.min(12, cameraRef.current.position.z + delta))
+    const handleWheel = (e: WheelEvent) => {
+      camera.position.z = Math.max(4, Math.min(12, camera.position.z + e.deltaY * 0.01))
     }
 
     renderer.domElement.addEventListener('mousedown', handleMouseDown)
-    renderer.domElement.addEventListener('mousemove', handleMouseMove)
-    renderer.domElement.addEventListener('mouseup', handleMouseUp)
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
     renderer.domElement.addEventListener('wheel', handleWheel)
 
-    // Animation loop - FORCE ROTATION TO WORK
+    // ── Animation loop ──
     const animate = () => {
       frameId.current = requestAnimationFrame(animate)
-      
-      // FORCE GLOBE ROTATION - MUCH FASTER AND VISIBLE
-      if (globeRef.current) {
-        if (!isDragging) {
-          globeRef.current.rotation.y += 0.02 // DOUBLE the speed for clear visibility
-        }
+      if (!isDragging) {
+        globeGroup.rotation.y += 0.003 // slow steady auto-spin
       }
-      
-      // Rotate wireframe with globe
-      if (wireframe) {
-        if (!isDragging) {
-          wireframe.rotation.y += 0.02
-        }
-      }
-      
-      // Rotate atmosphere with globe
-      if (atmosphere) {
-        if (!isDragging) {
-          atmosphere.rotation.y += 0.02
-        }
-      }
-      
-      // Rotate all nodes with globe
-      scene.children.forEach(child => {
-        if (child.userData && child.userData.country) {
-          if (!isDragging) {
-            child.rotation.y += 0.02
-          }
-        }
-      })
-      
       renderer.render(scene, camera)
     }
     animate()
 
-    // Handle resize
+    // Resize
     const handleResize = () => {
-      if (!mountRef.current || !camera || !renderer) return
-      
-      camera.aspect = mountRef.current.clientWidth / mountRef.current.clientHeight
+      if (!mount) return
+      camera.aspect = mount.clientWidth / mount.clientHeight
       camera.updateProjectionMatrix()
-      renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight)
+      renderer.setSize(mount.clientWidth, mount.clientHeight)
     }
     window.addEventListener('resize', handleResize)
 
-    // Cleanup
     return () => {
-      if (frameId.current) {
-        cancelAnimationFrame(frameId.current)
-      }
-      if (mountRef.current && renderer.domElement) {
-        mountRef.current.removeChild(renderer.domElement)
-      }
+      if (frameId.current) cancelAnimationFrame(frameId.current)
       renderer.domElement.removeEventListener('mousedown', handleMouseDown)
-      renderer.domElement.removeEventListener('mousemove', handleMouseMove)
-      renderer.domElement.removeEventListener('mouseup', handleMouseUp)
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
       renderer.domElement.removeEventListener('wheel', handleWheel)
       window.removeEventListener('resize', handleResize)
+      if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement)
       renderer.dispose()
     }
-  }, [])
+  }, [onCountryClick])
 
   return (
     <div className="w-full h-full relative">
       <div ref={mountRef} className="w-full h-full" />
-      
-      {/* Selected Country Info */}
+
       {selectedCountry && (
         <motion.div
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0, opacity: 0 }}
-          className="absolute top-6 left-1/2 transform -translate-x-1/2 glass-effect p-4 rounded-xl"
+          className="absolute top-6 left-1/2 transform -translate-x-1/2 bg-black/80 backdrop-blur-xl border border-white/20 p-4 rounded-xl"
         >
           <div className="text-center">
             <h3 className="text-lg font-bold text-white">{selectedCountry}</h3>
@@ -262,36 +200,34 @@ export default function InteractiveGlobe({ onCountryClick }: GlobeProps) {
         </motion.div>
       )}
 
-      {/* Globe Stats */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1 }}
-        className="absolute bottom-6 right-6 glass-effect p-4 rounded-xl"
+        className="absolute bottom-6 right-6 bg-black/80 backdrop-blur-xl border border-white/20 p-4 rounded-xl"
       >
         <div className="text-sm text-gray-300 mb-2">Live Statistics</div>
         <div className="space-y-1 text-xs">
-          <div className="flex justify-between">
+          <div className="flex justify-between gap-4">
             <span className="text-gray-400">Countries:</span>
             <span className="text-blue-400">{Object.keys(countryCoordinates).length}</span>
           </div>
-          <div className="flex justify-between">
+          <div className="flex justify-between gap-4">
             <span className="text-gray-400">News Sources:</span>
             <span className="text-green-400">200+</span>
           </div>
-          <div className="flex justify-between">
+          <div className="flex justify-between gap-4">
             <span className="text-gray-400">Updates:</span>
             <span className="text-yellow-400">Real-time</span>
           </div>
         </div>
       </motion.div>
 
-      {/* Controls Info */}
-      <motion.div 
+      <motion.div
         initial={{ x: -100, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.8, delay: 0.5 }}
-        className="absolute bottom-6 left-6 glass-effect p-4 rounded-xl"
+        className="absolute bottom-6 left-6 bg-black/80 backdrop-blur-xl border border-white/20 p-4 rounded-xl"
       >
         <div className="text-sm text-gray-300 mb-2">Globe Controls</div>
         <div className="space-y-2 text-xs text-gray-400">

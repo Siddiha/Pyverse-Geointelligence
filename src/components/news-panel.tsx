@@ -1,169 +1,79 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Clock, AlertTriangle, Activity, Filter, ExternalLink, TrendingUp } from 'lucide-react'
-
-interface NewsArticle {
-  id: string
-  title: string
-  summary: string
-  source: string
-  publishedAt: string
-  country: string
-  isBreaking: boolean
-  isTrending: boolean
-  category: string
-  url: string
-}
+import { Clock, AlertTriangle, Activity, ExternalLink, TrendingUp, RefreshCw } from 'lucide-react'
+import { useNews } from '@/hooks/use-news'
 
 interface NewsPanelProps {
   selectedCountry: string | null
 }
 
-// Enhanced mock news data
-const generateNewsData = (country?: string): NewsArticle[] => {
-  const globalNews = [
-    {
-      id: '1',
-      title: 'Global Military Exercise Signals Rising Tensions',
-      summary: 'NATO forces conduct largest joint military exercise in Eastern Europe since Cold War, raising concerns about regional stability.',
-      source: 'Reuters',
-      publishedAt: '2 minutes ago',
-      country: 'Global',
-      isBreaking: true,
-      isTrending: true,
-      category: 'Military',
-      url: '#'
-    },
-    {
-      id: '2',
-      title: 'Cyber Attack Targets Critical Infrastructure',
-      summary: 'State-sponsored hackers infiltrate power grid systems across multiple countries, highlighting cybersecurity vulnerabilities.',
-      source: 'BBC',
-      publishedAt: '15 minutes ago',
-      country: 'Global',
-      isBreaking: true,
-      isTrending: false,
-      category: 'Cybersecurity',
-      url: '#'
-    },
-    {
-      id: '3',
-      title: 'Economic Sanctions Expanded Against Authoritarian Regimes',
-      summary: 'G7 nations coordinate new financial restrictions targeting countries violating international law and human rights.',
-      source: 'Financial Times',
-      publishedAt: '1 hour ago',
-      country: 'Global',
-      isBreaking: false,
-      isTrending: true,
-      category: 'Economics',
-      url: '#'
-    },
-    {
-      id: '4',
-      title: 'Intelligence Report Reveals Foreign Election Interference',
-      summary: 'Classified documents expose sophisticated disinformation campaigns targeting democratic institutions worldwide.',
-      source: 'The Guardian',
-      publishedAt: '2 hours ago',
-      country: 'Global',
-      isBreaking: false,
-      isTrending: true,
-      category: 'Intelligence',
-      url: '#'
-    },
-    {
-      id: '5',
-      title: 'Arms Trade Monitoring Detects Illegal Weapons Shipments',
-      summary: 'International watchdog identifies suspicious military equipment transfers to conflict zones violating UN embargos.',
-      source: 'Al Jazeera',
-      publishedAt: '3 hours ago',
-      country: 'Global',
-      isBreaking: false,
-      isTrending: false,
-      category: 'Defense',
-      url: '#'
-    }
-  ]
+const CATEGORIES = ['All', 'General', 'Technology', 'Business', 'Science', 'Health', 'Sports', 'Entertainment']
 
-  const countrySpecificNews: Record<string, NewsArticle[]> = {
-    'Ukraine': [
-      {
-        id: 'ua1',
-        title: 'Ukraine Receives Advanced Defense Systems',
-        summary: 'Latest military aid package includes cutting-edge air defense technology to protect critical infrastructure.',
-        source: 'Kyiv Independent',
-        publishedAt: '30 minutes ago',
-        country: 'Ukraine',
-        isBreaking: true,
-        isTrending: true,
-        category: 'Defense',
-        url: '#'
-      },
-      {
-        id: 'ua2',
-        title: 'Humanitarian Corridors Established in Eastern Regions',
-        summary: 'International organizations coordinate safe passage for civilians in contested territories.',
-        source: 'Reuters',
-        publishedAt: '1 hour ago',
-        country: 'Ukraine',
-        isBreaking: false,
-        isTrending: true,
-        category: 'Humanitarian',
-        url: '#'
-      }
-    ],
-    'China': [
-      {
-        id: 'cn1',
-        title: 'China Conducts Large-Scale Military Drills Near Taiwan',
-        summary: 'PLA forces simulate amphibious assault scenarios in what analysts call escalatory military posturing.',
-        source: 'South China Morning Post',
-        publishedAt: '45 minutes ago',
-        country: 'China',
-        isBreaking: true,
-        isTrending: true,
-        category: 'Military',
-        url: '#'
-      },
-      {
-        id: 'cn2',
-        title: 'Technology Export Controls Tighten on Semiconductor Industry',
-        summary: 'New restrictions on advanced chip technology exports threaten global supply chain stability.',
-        source: 'Wall Street Journal',
-        publishedAt: '2 hours ago',
-        country: 'China',
-        isBreaking: false,
-        isTrending: true,
-        category: 'Technology',
-        url: '#'
-      }
-    ]
+const getCategoryColor = (category: string) => {
+  const colors: Record<string, string> = {
+    'Military': 'text-red-400 bg-red-900/20',
+    'Cybersecurity': 'text-purple-400 bg-purple-900/20',
+    'Economics': 'text-green-400 bg-green-900/20',
+    'Business': 'text-green-400 bg-green-900/20',
+    'Intelligence': 'text-orange-400 bg-orange-900/20',
+    'Defense': 'text-red-400 bg-red-900/20',
+    'Humanitarian': 'text-cyan-400 bg-cyan-900/20',
+    'Technology': 'text-indigo-400 bg-indigo-900/20',
+    'Science': 'text-blue-400 bg-blue-900/20',
+    'Health': 'text-pink-400 bg-pink-900/20',
+    'Sports': 'text-yellow-400 bg-yellow-900/20',
+    'Entertainment': 'text-purple-400 bg-purple-900/20',
+    'Environment': 'text-teal-400 bg-teal-900/20',
   }
-
-  if (country && countrySpecificNews[country]) {
-    return [...countrySpecificNews[country], ...globalNews.slice(0, 3)]
-  }
-
-  return globalNews
+  return colors[category] || 'text-gray-400 bg-gray-900/20'
 }
 
-export default function NewsPanel({ selectedCountry }: NewsPanelProps) {
-  const [news, setNews] = useState<NewsArticle[]>([])
-  const [filter, setFilter] = useState<'all' | 'breaking' | 'trending'>('all')
-  const [loading, setLoading] = useState(false)
-  const [lastUpdate, setLastUpdate] = useState(new Date())
+const REFRESH_INTERVAL_MS = 60_000 // auto-refresh every 60 seconds
 
-  useEffect(() => {
-    setLoading(true)
-    // Simulate API call
-    setTimeout(() => {
-      const newsData = generateNewsData(selectedCountry || undefined)
-      setNews(newsData)
+export default function NewsPanel({ selectedCountry }: NewsPanelProps) {
+  const { news, loading, error, fetchNews } = useNews()
+  const [filter, setFilter] = useState<'all' | 'breaking' | 'trending'>('all')
+  const [selectedCategory, setSelectedCategory] = useState('All')
+  const [lastUpdate, setLastUpdate] = useState(new Date())
+  const [countdown, setCountdown] = useState(REFRESH_INTERVAL_MS / 1000)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const loadNews = (silent = false) => {
+    const category = selectedCategory !== 'All' ? selectedCategory : undefined
+    fetchNews(selectedCountry || undefined, category).then(() => {
       setLastUpdate(new Date())
-      setLoading(false)
-    }, 800)
-  }, [selectedCountry])
+      if (!silent) setCountdown(REFRESH_INTERVAL_MS / 1000)
+    })
+  }
+
+  // Reset and restart auto-refresh whenever country or category changes
+  useEffect(() => {
+    loadNews()
+
+    if (intervalRef.current) clearInterval(intervalRef.current)
+    if (countdownRef.current) clearInterval(countdownRef.current)
+
+    setCountdown(REFRESH_INTERVAL_MS / 1000)
+
+    // Countdown ticker
+    countdownRef.current = setInterval(() => {
+      setCountdown(prev => (prev <= 1 ? REFRESH_INTERVAL_MS / 1000 : prev - 1))
+    }, 1000)
+
+    // Auto-refresh
+    intervalRef.current = setInterval(() => {
+      loadNews(true)
+      setCountdown(REFRESH_INTERVAL_MS / 1000)
+    }, REFRESH_INTERVAL_MS)
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+      if (countdownRef.current) clearInterval(countdownRef.current)
+    }
+  }, [selectedCountry, selectedCategory])
 
   const filteredNews = news.filter(article => {
     if (filter === 'breaking') return article.isBreaking
@@ -173,19 +83,6 @@ export default function NewsPanel({ selectedCountry }: NewsPanelProps) {
 
   const breakingCount = news.filter(n => n.isBreaking).length
   const trendingCount = news.filter(n => n.isTrending).length
-
-  const getCategoryColor = (category: string) => {
-    const colors: Record<string, string> = {
-      'Military': 'text-red-400 bg-red-900/20',
-      'Cybersecurity': 'text-purple-400 bg-purple-900/20',
-      'Economics': 'text-green-400 bg-green-900/20',
-      'Intelligence': 'text-orange-400 bg-orange-900/20',
-      'Defense': 'text-red-400 bg-red-900/20',
-      'Humanitarian': 'text-cyan-400 bg-cyan-900/20',
-      'Technology': 'text-indigo-400 bg-indigo-900/20'
-    }
-    return colors[category] || 'text-gray-400 bg-gray-900/20'
-  }
 
   return (
     <div className="h-full flex flex-col bg-black border-l border-gray-800">
@@ -198,7 +95,7 @@ export default function NewsPanel({ selectedCountry }: NewsPanelProps) {
             </div>
             <div>
               <h2 className="text-lg font-bold text-white">
-                {selectedCountry ? `${selectedCountry} Intel` : 'Global Intelligence'}
+                {selectedCountry ? `${selectedCountry} News` : 'Global News'}
               </h2>
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 bg-red-400 rounded-full animate-pulse"></div>
@@ -206,12 +103,15 @@ export default function NewsPanel({ selectedCountry }: NewsPanelProps) {
               </div>
             </div>
           </div>
-          
+
           <button
-            onClick={() => setLoading(!loading)}
-            className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+            type="button"
+            onClick={loadNews}
+            disabled={loading}
+            className="p-2 hover:bg-gray-800 rounded-lg transition-colors disabled:opacity-50"
+            title="Refresh news"
           >
-            <Filter className="h-4 w-4 text-gray-400" />
+            <RefreshCw className={`h-4 w-4 text-gray-400 ${loading ? 'animate-spin' : ''}`} />
           </button>
         </div>
 
@@ -232,25 +132,42 @@ export default function NewsPanel({ selectedCountry }: NewsPanelProps) {
         </div>
 
         {/* Filter Tabs */}
-        <div className="flex space-x-2">
+        <div className="flex space-x-2 mb-3">
           {[
-            { key: 'all', label: 'All Intel', count: news.length },
+            { key: 'all', label: 'All', count: news.length },
             { key: 'breaking', label: 'Breaking', count: breakingCount },
             { key: 'trending', label: 'Trending', count: trendingCount }
-          ].map((filterType) => (
+          ].map((f) => (
             <button
-              key={filterType.key}
-              onClick={() => setFilter(filterType.key as any)}
+              type="button"
+              key={f.key}
+              onClick={() => setFilter(f.key as any)}
               className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-xs transition-all ${
-                filter === filterType.key
+                filter === f.key
                   ? 'bg-orange-600 text-white'
                   : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
               }`}
             >
-              <span>{filterType.label}</span>
-              <span className="bg-black/30 px-1.5 py-0.5 rounded text-xs">
-                {filterType.count}
-              </span>
+              <span>{f.label}</span>
+              <span className="bg-black/30 px-1.5 py-0.5 rounded text-xs">{f.count}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Category Filter */}
+        <div className="flex gap-1 flex-wrap">
+          {CATEGORIES.map(cat => (
+            <button
+              type="button"
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-2 py-1 rounded text-xs transition-all ${
+                selectedCategory === cat
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-800 text-gray-500 hover:bg-gray-700 hover:text-gray-300'
+              }`}
+            >
+              {cat}
             </button>
           ))}
         </div>
@@ -262,97 +179,134 @@ export default function NewsPanel({ selectedCountry }: NewsPanelProps) {
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mx-auto mb-4"></div>
-              <p className="text-gray-400 text-sm">Gathering intelligence...</p>
+              <p className="text-gray-400 text-sm">Fetching latest news...</p>
             </div>
           </div>
         )}
 
-        <div className="p-4 space-y-4">
-          <AnimatePresence>
-            {filteredNews.map((article, index) => (
-              <motion.div
-                key={article.id}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ delay: index * 0.1 }}
-                className="group bg-gray-900/50 hover:bg-gray-800/70 border border-gray-700 hover:border-orange-600/50 rounded-xl p-4 cursor-pointer transition-all duration-300"
-                onClick={() => window.open(article.url, '_blank')}
+        {error && !loading && (
+          <div className="p-4">
+            <div className="bg-red-900/20 border border-red-800/30 rounded-lg p-4 text-center">
+              <AlertTriangle className="h-8 w-8 text-red-400 mx-auto mb-2" />
+              <p className="text-red-300 text-sm mb-3">{error}</p>
+              <button
+                type="button"
+                onClick={loadNews}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs transition-colors"
               >
-                {/* Article Header */}
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-center space-x-2">
-                    {article.isBreaking && (
-                      <span className="px-2 py-1 bg-red-600 text-white text-xs rounded-full animate-pulse font-medium">
-                        BREAKING
-                      </span>
-                    )}
-                    {article.isTrending && (
-                      <div className="flex items-center space-x-1">
-                        <TrendingUp className="h-3 w-3 text-orange-400" />
-                        <span className="text-orange-400 text-xs font-medium">TRENDING</span>
-                      </div>
-                    )}
+                Retry
+              </button>
+            </div>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <div className="p-4 space-y-4">
+            <AnimatePresence>
+              {filteredNews.map((article, index) => (
+                <motion.div
+                  key={article.id}
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="group bg-gray-900/50 hover:bg-gray-800/70 border border-gray-700 hover:border-orange-600/50 rounded-xl p-4 cursor-pointer transition-all duration-300"
+                  onClick={() => article.url && article.url !== '#' && window.open(article.url, '_blank')}
+                >
+                  {/* Article Image */}
+                  {article.imageUrl && (
+                    <div className="mb-3 rounded-lg overflow-hidden">
+                      <img
+                        src={article.imageUrl}
+                        alt={article.title}
+                        className="w-full h-32 object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                      />
+                    </div>
+                  )}
+
+                  {/* Article Header */}
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center space-x-2 flex-wrap gap-1">
+                      {article.isBreaking && (
+                        <span className="px-2 py-1 bg-red-600 text-white text-xs rounded-full animate-pulse font-medium">
+                          BREAKING
+                        </span>
+                      )}
+                      {article.isTrending && (
+                        <div className="flex items-center space-x-1">
+                          <TrendingUp className="h-3 w-3 text-orange-400" />
+                          <span className="text-orange-400 text-xs font-medium">TRENDING</span>
+                        </div>
+                      )}
+                    </div>
+                    <ExternalLink className="h-4 w-4 text-gray-500 group-hover:text-orange-400 transition-colors flex-shrink-0 ml-2" />
                   </div>
-                  <ExternalLink className="h-4 w-4 text-gray-500 group-hover:text-orange-400 transition-colors" />
-                </div>
 
-                {/* Title */}
-                <h3 className="text-white font-medium mb-2 leading-tight group-hover:text-orange-300 transition-colors">
-                  {article.title}
-                </h3>
+                  {/* Title */}
+                  <h3 className="text-white font-medium mb-2 leading-tight group-hover:text-orange-300 transition-colors">
+                    {article.title}
+                  </h3>
 
-                {/* Summary */}
-                <p className="text-gray-400 text-sm mb-3 leading-relaxed">
-                  {article.summary}
-                </p>
+                  {/* Summary */}
+                  <p className="text-gray-400 text-sm mb-3 leading-relaxed line-clamp-2">
+                    {article.summary}
+                  </p>
 
-                {/* Category and Meta */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(article.category)}`}>
-                      {article.category}
-                    </span>
+                  {/* Category and Meta */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(article.category)}`}>
+                        {article.category}
+                      </span>
+                      <span className="text-xs text-gray-500">{article.source}</span>
+                    </div>
                     <div className="flex items-center space-x-1 text-gray-500">
-                      <span className="text-xs">{article.source}</span>
+                      <Clock className="h-3 w-3" />
+                      <span className="text-xs">{article.publishedAt}</span>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-1 text-gray-500">
-                    <Clock className="h-3 w-3" />
-                    <span className="text-xs">{article.publishedAt}</span>
-                  </div>
-                </div>
 
-                {/* Hover Effect Line */}
-                <div className="h-0.5 bg-gradient-to-r from-orange-500 to-red-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 mt-3"></div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
+                  {article.author && article.author !== 'Unknown' && (
+                    <p className="text-xs text-gray-600 mt-1">by {article.author}</p>
+                  )}
 
-          {filteredNews.length === 0 && !loading && (
-            <div className="text-center py-12">
-              <AlertTriangle className="h-16 w-16 mx-auto mb-4 text-gray-600" />
-              <p className="text-gray-400 mb-2">No intelligence data found</p>
-              <p className="text-gray-500 text-sm">
-                {selectedCountry 
-                  ? `No current intel for ${selectedCountry}` 
-                  : 'Try adjusting your filters or check back later'
-                }
-              </p>
-            </div>
-          )}
-        </div>
+                  <div className="h-0.5 bg-gradient-to-r from-orange-500 to-red-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 mt-3"></div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+
+            {filteredNews.length === 0 && (
+              <div className="text-center py-12">
+                <AlertTriangle className="h-16 w-16 mx-auto mb-4 text-gray-600" />
+                <p className="text-gray-400 mb-2">No news articles found</p>
+                <p className="text-gray-500 text-sm">
+                  {selectedCountry
+                    ? `No current news for ${selectedCountry}`
+                    : 'Try adjusting your filters or check back later'}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Footer Status */}
       <div className="p-4 border-t border-gray-800 bg-gray-900/30">
         <div className="flex items-center justify-between text-xs">
           <div className="flex items-center space-x-2">
-            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            <span className="text-green-400">Intel Feed Active</span>
+            <div className={`w-2 h-2 rounded-full animate-pulse ${error ? 'bg-red-400' : 'bg-green-400'}`}></div>
+            <span className={error ? 'text-red-400' : 'text-green-400'}>
+              {error ? 'Feed Error' : 'Live Feed Active'}
+            </span>
           </div>
-          <div className="text-gray-500">
-            Last update: {lastUpdate.toLocaleTimeString()}
+          <div className="flex items-center space-x-3 text-gray-500">
+            <span>Updated: {lastUpdate.toLocaleTimeString()}</span>
+            {!error && (
+              <span className="text-orange-400/70">
+                next in {countdown}s
+              </span>
+            )}
           </div>
         </div>
       </div>

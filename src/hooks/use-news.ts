@@ -16,87 +16,86 @@ export interface NewsArticle {
   imageUrl?: string
 }
 
-// Mock news data
-const mockNews: NewsArticle[] = [
+const INITIAL_MOCK: NewsArticle[] = [
   {
-    id: '1',
+    id: 'init-1',
     title: 'Global Climate Summit Reaches Historic Agreement',
     summary: 'World leaders unite on comprehensive climate action plan with binding emissions targets for 2030.',
-    content: 'In a groundbreaking development, representatives from 195 countries have reached a historic climate agreement...',
+    content: '',
     source: 'Reuters',
     author: 'Climate Desk',
-    url: 'https://example.com/climate-summit',
+    url: '#',
     publishedAt: '2 hours ago',
     country: 'Global',
     isBreaking: true,
     isTrending: true,
-    category: 'Environment',
-    imageUrl: 'https://images.unsplash.com/photo-1569163139394-de44cb36f4ac?w=400'
+    category: 'Science',
+    imageUrl: 'https://images.unsplash.com/photo-1569163139394-de44cb36f4ac?w=400',
   },
   {
-    id: '2',
+    id: 'init-2',
     title: 'Tech Giants Announce Joint AI Safety Initiative',
-    summary: 'Major technology companies collaborate on new framework for responsible artificial intelligence development.',
-    content: 'Leading technology companies including Google, Microsoft, and OpenAI have announced a joint initiative...',
+    summary: 'Major technology companies collaborate on new framework for responsible AI development.',
+    content: '',
     source: 'TechCrunch',
     author: 'Sarah Johnson',
-    url: 'https://example.com/ai-safety',
+    url: '#',
     publishedAt: '4 hours ago',
     country: 'United States',
     isBreaking: false,
     isTrending: true,
     category: 'Technology',
-    imageUrl: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=400'
+    imageUrl: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?w=400',
   },
   {
-    id: '3',
+    id: 'init-3',
     title: 'Economic Markets Show Strong Recovery Signals',
     summary: 'Asian markets lead global recovery with significant gains across major indices.',
-    content: 'Financial markets across Asia have shown remarkable resilience...',
+    content: '',
     source: 'Financial Times',
     author: 'Markets Team',
-    url: 'https://example.com/market-recovery',
+    url: '#',
     publishedAt: '6 hours ago',
     country: 'Japan',
     isBreaking: false,
     isTrending: false,
     category: 'Business',
-    imageUrl: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400'
-  }
+    imageUrl: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=400',
+  },
 ]
 
 export const useNews = () => {
-  const [news, setNews] = useState<NewsArticle[]>(mockNews)
+  const [news, setNews] = useState<NewsArticle[]>(INITIAL_MOCK)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchNews = useCallback(async (country?: string) => {
+  const fetchNews = useCallback(async (country?: string, category?: string) => {
     setLoading(true)
     setError(null)
-    
+
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      // Filter news by country if provided
-      const filteredNews = country 
-        ? mockNews.filter(article => 
-            article.country === country || article.country === 'Global'
-          )
-        : mockNews
-      
-      setNews(filteredNews)
+      const params = new URLSearchParams()
+      if (country) params.append('country', country)
+      if (category) params.append('category', category)
+
+      const response = await fetch(`/api/news?${params.toString()}`)
+      const data = await response.json()
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Failed to fetch news')
+      }
+
+      if (Array.isArray(data.data) && data.data.length > 0) {
+        setNews(data.data)
+      }
+      // if API returned empty array, keep existing news visible
     } catch (err) {
-      setError('Failed to fetch news')
+      // show a non-blocking error but keep existing news visible
+      setError(err instanceof Error ? err.message : 'Failed to fetch news')
     } finally {
       setLoading(false)
     }
   }, [])
 
-  return {
-    news,
-    loading,
-    error,
-    fetchNews
-  }
+  return { news, loading, error, fetchNews }
 }

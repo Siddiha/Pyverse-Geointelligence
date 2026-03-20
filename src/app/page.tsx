@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useState } from 'react'
+import { Suspense, useState, useRef, useCallback } from 'react'
 import dynamic from 'next/dynamic'
 import { motion } from 'framer-motion'
 import { Globe, MessageCircle, Mic, TrendingUp } from 'lucide-react'
@@ -27,14 +27,43 @@ const VoiceAssistant = dynamic(() => import('@/components/voice-assistant'), {
   ssr: false
 })
 
+const MIN_PANEL_WIDTH = 280
+const MAX_PANEL_WIDTH = 600
+
 export default function HomePage() {
   const [selectedCountry, setSelectedCountry] = useState<string | null>(null)
   const [isChatOpen, setIsChatOpen] = useState(false)
   const [isVoiceActive, setIsVoiceActive] = useState(false)
+  const [panelWidth, setPanelWidth] = useState(384) // default w-96 = 384px
+  const isDragging = useRef(false)
 
   const handleCountrySelect = (country: string) => {
     setSelectedCountry(country)
   }
+
+  const startResize = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    isDragging.current = true
+    document.body.style.cursor = 'col-resize'
+    document.body.style.userSelect = 'none'
+
+    const onMouseMove = (ev: MouseEvent) => {
+      if (!isDragging.current) return
+      const newWidth = window.innerWidth - ev.clientX
+      setPanelWidth(Math.min(MAX_PANEL_WIDTH, Math.max(MIN_PANEL_WIDTH, newWidth)))
+    }
+
+    const onMouseUp = () => {
+      isDragging.current = false
+      document.body.style.cursor = ''
+      document.body.style.userSelect = ''
+      window.removeEventListener('mousemove', onMouseMove)
+      window.removeEventListener('mouseup', onMouseUp)
+    }
+
+    window.addEventListener('mousemove', onMouseMove)
+    window.addEventListener('mouseup', onMouseUp)
+  }, [])
 
   return (
     <div className="h-screen w-full flex flex-col bg-black overflow-hidden">
@@ -130,12 +159,22 @@ export default function HomePage() {
           </motion.div>
         </motion.main>
 
+        {/* Drag Handle */}
+        <div
+          onMouseDown={startResize}
+          className="w-1 cursor-col-resize bg-white/10 hover:bg-orange-500/60 transition-colors duration-150 flex-shrink-0 group relative"
+          title="Drag to resize"
+        >
+          <div className="absolute inset-y-0 -left-1 -right-1" />
+        </div>
+
         {/* News Panel */}
-        <motion.aside 
+        <motion.aside
           initial={{ x: 400, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.8, delay: 0.4 }}
-          className="w-96 bg-black/90 backdrop-blur-xl border-l border-white/20 flex flex-col"
+          style={{ width: panelWidth }}
+          className="bg-black/90 backdrop-blur-xl border-l border-white/20 flex flex-col flex-shrink-0"
         >
           <Suspense fallback={
             <div className="h-full flex items-center justify-center">
