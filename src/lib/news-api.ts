@@ -1,3 +1,27 @@
+interface NewsApiArticle {
+  title: string
+  description: string | null
+  content: string | null
+  source: { name: string }
+  author: string | null
+  url: string
+  publishedAt: string
+  urlToImage: string | null
+}
+
+interface GuardianArticle {
+  webTitle: string
+  webUrl: string
+  webPublicationDate: string
+  sectionName: string
+  fields?: {
+    headline?: string
+    trailText?: string
+    thumbnail?: string
+    byline?: string
+  }
+}
+
 export interface NewsArticle {
   id: string
   title: string
@@ -123,8 +147,8 @@ export const fetchNews = async (country?: string, category?: string): Promise<Ne
 
       if (response.ok) {
         const data = await response.json()
-        const articles = data.articles?.filter((a: any) => a.title && a.title !== '[Removed]') || []
-        return articles.map((article: any, index: number) => ({
+        const articles: NewsApiArticle[] = data.articles?.filter((a: NewsApiArticle) => a.title && a.title !== '[Removed]') || []
+        return articles.map((article, index) => ({
           id: `newsapi-${index}-${Date.now()}`,
           title: article.title || 'No title',
           summary: article.description || 'No description available',
@@ -165,7 +189,7 @@ export const fetchNews = async (country?: string, category?: string): Promise<Ne
 
       if (response.ok) {
         const data = await response.json()
-        return (data.response?.results || []).map((article: any, index: number) => ({
+        return (data.response?.results as GuardianArticle[] || []).map((article, index) => ({
           id: `guardian-${index}-${Date.now()}`,
           title: article.fields?.headline || article.webTitle || 'No title',
           summary: article.fields?.trailText || 'No description available',

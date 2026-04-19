@@ -8,11 +8,27 @@ interface VoiceAssistantProps {
   onClose: () => void
 }
 
-// Extend Window interface for speech recognition
+interface SpeechRecognitionEvent extends Event {
+  resultIndex: number
+  results: SpeechRecognitionResultList
+}
+
+interface SpeechRecognitionInstance extends EventTarget {
+  continuous: boolean
+  interimResults: boolean
+  lang: string
+  start(): void
+  stop(): void
+  onstart: ((event: Event) => void) | null
+  onend: ((event: Event) => void) | null
+  onresult: ((event: SpeechRecognitionEvent) => void) | null
+  onerror: ((event: Event & { error: string }) => void) | null
+}
+
 declare global {
   interface Window {
-    webkitSpeechRecognition: any
-    SpeechRecognition: any
+    webkitSpeechRecognition: new () => SpeechRecognitionInstance
+    SpeechRecognition: new () => SpeechRecognitionInstance
   }
 }
 
@@ -24,7 +40,7 @@ export default function VoiceAssistant({ onClose }: VoiceAssistantProps) {
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [error, setError] = useState('')
   
-  const recognitionRef = useRef<any>(null)
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null)
   const synthesisRef = useRef<SpeechSynthesisUtterance | null>(null)
 
   useEffect(() => {
@@ -43,7 +59,7 @@ export default function VoiceAssistant({ onClose }: VoiceAssistantProps) {
           setError('')
         }
 
-        recognitionRef.current.onresult = (event: any) => {
+        recognitionRef.current.onresult = (event: SpeechRecognitionEvent) => {
           let finalTranscript = ''
           let interimTranscript = ''
 
@@ -59,7 +75,7 @@ export default function VoiceAssistant({ onClose }: VoiceAssistantProps) {
           setTranscript(finalTranscript || interimTranscript)
         }
 
-        recognitionRef.current.onerror = (event: any) => {
+        recognitionRef.current.onerror = (event: Event & { error: string }) => {
           console.error('Speech recognition error:', event.error)
           setError(`Speech recognition error: ${event.error}`)
           setIsListening(false)
